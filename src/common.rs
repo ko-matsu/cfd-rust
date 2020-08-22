@@ -7,8 +7,8 @@ use std::error;
 use std::ffi::{CStr, CString};
 use std::fmt;
 use std::ptr;
-use std::{io, str};
 use std::str::FromStr;
+use std::{io, str};
 
 use self::cfd_sys::{
   CfdCreateSimpleHandle, CfdFreeHandle, CfdGetConfidentialValueHex, CfdGetLastErrorMessage,
@@ -113,6 +113,13 @@ impl Network {
       11 => Network::ElementsRegtest,
       12 => Network::CustomChain,
       _ => Network::Mainnet,
+    }
+  }
+
+  pub fn is_elements(&self) -> bool {
+    match self {
+      Network::Mainnet | Network::Testnet | Network::Regtest => false,
+      Network::LiquidV1 | Network::ElementsRegtest | Network::CustomChain => true,
     }
   }
 }
@@ -437,9 +444,8 @@ impl Default for Amount {
   }
 }
 
-
 /// A container that stores a reverse byte container.
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct ReverseContainer {
   data: [u8; 32],
 }
@@ -470,6 +476,25 @@ impl ReverseContainer {
     let byte_data = ByteData::from_slice_reverse(&self.data);
     byte_data.to_hex()
   }
+  /// check empty data.
+  ///
+  /// # Example
+  ///
+  /// ```
+  /// use cfd_rust::ReverseContainer;
+  /// let bytes = [1; 32];
+  /// let key = ReverseContainer::from_slice(&bytes);
+  /// let valid = key.is_empty();
+  /// ```
+  #[inline]
+  pub fn is_empty(&self) -> bool {
+    for i in &self.data {
+      if *i != 0 {
+        return false;
+      }
+    }
+    true
+  }
 }
 
 impl FromStr for ReverseContainer {
@@ -498,9 +523,7 @@ impl fmt::Display for ReverseContainer {
 
 impl Default for ReverseContainer {
   fn default() -> ReverseContainer {
-    ReverseContainer {
-      data: [0; 32],
-    }
+    ReverseContainer { data: [0; 32] }
   }
 }
 
