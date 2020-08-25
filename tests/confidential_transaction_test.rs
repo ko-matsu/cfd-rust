@@ -849,7 +849,10 @@ mod elements_tests {
     let sig = privkey
       .calculate_ec_signature(&sighash, true)
       .expect("Fail");
+    assert_eq!("11cff5458ca362dbb540be2226244fd262f3eadaa005eac2a367b70d136413e71c9981f607a5eb7f1283d26d2860495fafdad53c5699944fe8b01dadb4aa0f7d",
+    sig.to_hex());
     let signature = sig
+      .clone()
       .set_use_der_encode(&sighash_type)
       .to_der_encode()
       .expect("Fail");
@@ -859,6 +862,11 @@ mod elements_tests {
     let script = Script::from_str_array(&[signature.to_hex(), pubkey.to_hex()]).expect("Fail");
     assert_eq!("473044022011cff5458ca362dbb540be2226244fd262f3eadaa005eac2a367b70d136413e702201c9981f607a5eb7f1283d26d2860495fafdad53c5699944fe8b01dadb4aa0f7d01210331e9b0c6b7f3798bb1b5a6b90c5e2e27c2906cbfd063a3c97b6031ee062ef745",
       script.to_hex());
+
+    let verify = pubkey
+      .verify_ec_signature(&sighash, sig.to_slice())
+      .expect("Fail");
+    assert_eq!(true, verify);
 
     let is_verify = tx
       .verify_signature_by_pubkey(&outpoint, desc.get_hash_type(), &pubkey, &signature, &value)

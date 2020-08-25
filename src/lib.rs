@@ -25,6 +25,7 @@ pub use address::AddressType;
 pub use address::HashType;
 pub use address::WitnessVersion;
 pub use confidential_address::ConfidentialAddress;
+pub use confidential_transaction::decode_raw_transaction;
 pub use confidential_transaction::get_default_blinding_key;
 pub use confidential_transaction::get_issuance_blinding_key;
 pub use confidential_transaction::BlindFactor;

@@ -4,7 +4,7 @@ extern crate cfd_rust;
 mod tests {
   use cfd_rust::{
     Address, Amount, Descriptor, ExtPrivkey, ExtPubkey, FeeOption, FundTargetOption,
-    FundTransactionData, HashType, Network, OutPoint, Script, SigHashType, SignParameter,
+    FundTransactionData, HashType, Network, OutPoint, Pubkey, Script, SigHashType, SignParameter,
     Transaction, TxInData, TxOutData, UtxoData,
   };
   use std::str::FromStr;
@@ -535,6 +535,31 @@ mod tests {
       .expect("Fail");
     assert_eq!("0200000000010201000000000000000000000000000000000000000000000000000000000000000200000000ffffffff0100000000000000000000000000000000000000000000000000000000000000030000002322002064a0e02e723ce71d8f18441a39bedd5cefc9c5411c3045614c34bba1a8fbd94fffffffff0310270000000000001600148b756cbd98f4f55e985f80437a619d47f0732a941027000000000000160014c0a3dd0b7c1b3281be91112e16ce931dbac2a97950c3000000000000160014ad3abd3c325e40e20d89aa054dd980b97494f16c0004004730440220749cbe5080a3ce49c2a89f897be537b2b5449b75c64b57030dea1859b22c183f02200573f5be5170bfe4ca617edec0eb021638dd78b90209bbd8eede8a9e8138a32c01473044022019105df75884ff34111282f32c22986db295596983a87bf0df1d16905b4f9a50022075f8a2c8e3335a4265265b428df185fb045d9614ed1b08929bfa9f3f9d294a72016952210334bd4f1bab7f3e6f6bfc4a4aeaa890b858a9a146c6bd6bc5a3fbc00a12524ca72103ff743075c59596729d74b79694ca99b2c57bed6a77a06871b123b6e0d729823021036759d0dc7623e781de940a9bc9162f69c6ad68cc5be1c748e960ae4613e658e053ae00000000",
       tx.to_str());
+  }
+
+  #[test]
+  fn verify_pkh_test() {
+    let tx = Transaction::from_str("01000000019c53cb2a6118530aaa345b799aeb7e4e5055de41ac5b2dd2ce47419624c57b580000000000ffffffff0130ea052a010000001976a9143cadb10040e9e7002bbd9d0620f5f79c05603ffd88ac00000000").expect("Fail");
+    let outpoint = OutPoint::from_str(
+      "587bc524964147ced22d5bac41de55504e7eeb9a795b34aa0a5318612acb539c",
+      0,
+    )
+    .expect("Fail");
+    let hash_type = HashType::P2pkh;
+    let pubkey =
+      Pubkey::from_str("02f56451fc1fd9040652ff9a700cf914ad1df1c8f9e82f3fe96ca01b6cd47293ef")
+        .expect("Fail");
+    let signature = SignParameter::from_str("3c1cffcc8908ab1911303f102c41e5c677488346851288360b0d309ab99557207ac2c9c6aec9d8bae187a1eea843dda423edff216c568efad231e4249c77ffe1").expect("Fail").set_use_der_encode(&SigHashType::All);
+    let verify = tx
+      .verify_signature_by_pubkey(
+        &outpoint,
+        &hash_type,
+        &pubkey,
+        &signature,
+        &Amount::default(),
+      )
+      .expect("Fail");
+    assert_eq!(true, verify);
   }
 
   #[test]

@@ -2471,9 +2471,16 @@ impl TransactionOperation {
     key: &HashTypeData,
     option: &SigHashOption,
   ) -> Result<bool, CfdError> {
+    let sig_data = match sign_data.len() {
+      64 | 65 => Ok(sign_data.to_hex()),
+      _ => {
+        let der_decoded = sign_data.to_der_decode()?;
+        Ok(der_decoded.to_hex())
+      }
+    }?;
     let tx_str = alloc_c_string(tx)?;
     let txid = alloc_c_string(&outpoint.txid.to_hex())?;
-    let signature = alloc_c_string(&sign_data.to_hex())?;
+    let signature = alloc_c_string(&sig_data)?;
     let pubkey_hex = alloc_c_string(&key.pubkey.to_hex())?;
     let script_hex = alloc_c_string(&key.script.to_hex())?;
     let value_byte_hex = alloc_c_string(&option.value_byte.to_hex())?;

@@ -4,8 +4,8 @@ extern crate libc;
 use self::libc::{c_char, c_int, c_longlong, c_uint, c_void};
 use crate::common::{
   alloc_c_string, byte_from_hex, byte_from_hex_unsafe, collect_cstring_and_free,
-  collect_multi_cstring_and_free, hex_from_bytes, Amount, ByteData, CfdError, ErrorHandle, Network,
-  ReverseContainer,
+  collect_multi_cstring_and_free, hex_from_bytes, request_json, Amount, ByteData, CfdError,
+  ErrorHandle, Network, ReverseContainer,
 };
 use crate::transaction::{
   set_fund_tx_option, FeeData, FeeOption, FundOptionValue, FundTargetOption, FundTransactionData,
@@ -107,8 +107,13 @@ impl BlindFactor {
 impl FromStr for BlindFactor {
   type Err = CfdError;
   fn from_str(text: &str) -> Result<BlindFactor, CfdError> {
-    let data = ReverseContainer::from_str(text)?;
-    Ok(BlindFactor { data })
+    match text.len() {
+      0 | 1 => Ok(BlindFactor::default()),
+      _ => {
+        let data = ReverseContainer::from_str(text)?;
+        Ok(BlindFactor { data })
+      }
+    }
   }
 }
 
@@ -779,6 +784,37 @@ pub fn get_default_blinding_key(
   result
 }
 
+/// decode transaction to json.
+///
+/// # Arguments
+/// * `network` - A network type.
+/// * `tx` - A transaction.
+pub fn decode_raw_transaction(network: &Network, tx: &str) -> Result<String, CfdError> {
+  match network.is_elements() {
+    true => {
+      let mainchain_network = match network {
+        Network::LiquidV1 => Network::Mainnet,
+        _ => Network::Regtest,
+      };
+      let data = format!(
+        "{{\"hex\":\"{}\",\"network\":\"{}\",\"mainchainNetwork\":\"{}\"}}",
+        tx,
+        network.to_str(),
+        mainchain_network.to_str()
+      );
+      request_json("ElementsDecodeRawTransaction", &data)
+    }
+    _ => {
+      let data = format!(
+        "{{\"hex\":\"{}\",\"network\":\"{}\"}}",
+        tx,
+        network.to_str()
+      );
+      request_json("DecodeRawTransaction", &data)
+    }
+  }
+}
+
 // ----------------------------------------------------------------------------
 
 /// A container that stores a input address data.
@@ -1083,6 +1119,16 @@ impl ElementsUtxoData {
     Ok(self)
   }
 
+  pub fn set_blinder(
+    mut self,
+    asset_blind_factor: &BlindFactor,
+    amount_blind_factor: &BlindFactor,
+  ) -> ElementsUtxoData {
+    self.asset_blind_factor = asset_blind_factor.clone();
+    self.amount_blind_factor = amount_blind_factor.clone();
+    self
+  }
+
   pub fn set_blind_info(
     mut self,
     value_commitment: &ConfidentialValue,
@@ -1203,6 +1249,17 @@ impl ConfidentialTxOutData {
     data.amount = amount;
     data.asset = asset.clone();
     data
+  }
+
+  pub fn from_destroy_amount(
+    amount: i64,
+    asset: &ConfidentialAsset,
+  ) -> Result<ConfidentialTxOutData, CfdError> {
+    let mut data = ConfidentialTxOutData::default();
+    data.amount = amount;
+    data.asset = asset.clone();
+    data.locking_script = Script::from_slice(&[0x6a])?;
+    Ok(data)
   }
 
   pub fn get_address_str(&self) -> &str {
@@ -1855,7 +1912,10 @@ impl ConfidentialTransaction {
     let option = SigHashOption {
       sighash_type: *sighash_type,
       amount: value.to_amount(),
-      value_byte: value.as_byte_data(),
+      value_byte: match value.is_empty() {
+        true => ByteData::default(),
+        _ => value.as_byte_data(),
+      },
     };
     ope.create_sighash(
       &hex_from_bytes(&self.tx),
@@ -1906,7 +1966,10 @@ impl ConfidentialTransaction {
     let option = SigHashOption {
       sighash_type: *sighash_type,
       amount: value.to_amount(),
-      value_byte: value.as_byte_data(),
+      value_byte: match value.is_empty() {
+        true => ByteData::default(),
+        _ => value.as_byte_data(),
+      },
     };
     ope.create_sighash(
       &hex_from_bytes(&self.tx),
@@ -2022,7 +2085,10 @@ impl ConfidentialTransaction {
     let option = SigHashOption {
       sighash_type: *sighash_type,
       amount: value.to_amount(),
-      value_byte: value.as_byte_data(),
+      value_byte: match value.is_empty() {
+        true => ByteData::default(),
+        _ => value.as_byte_data(),
+      },
     };
     let tx = ope.sign_with_privkey(&tx_hex, outpoint, hash_type, &key, &option, true)?;
     let new_tx_hex = ope.get_last_tx();
@@ -2277,7 +2343,10 @@ impl ConfidentialTransaction {
     let option = SigHashOption {
       sighash_type: *signature.get_sighash_type(),
       amount: value.to_amount(),
-      value_byte: value.as_byte_data(),
+      value_byte: match value.is_empty() {
+        true => ByteData::default(),
+        _ => value.as_byte_data(),
+      },
     };
     let key = HashTypeData::from_pubkey(pubkey);
     ope.verify_signature(
@@ -2334,7 +2403,10 @@ impl ConfidentialTransaction {
     let option = SigHashOption {
       sighash_type: *signature.get_sighash_type(),
       amount: value.to_amount(),
-      value_byte: value.as_byte_data(),
+      value_byte: match value.is_empty() {
+        true => ByteData::default(),
+        _ => value.as_byte_data(),
+      },
     };
     let key = HashTypeData::new(pubkey, redeem_script);
     ope.verify_signature(
@@ -2386,7 +2458,10 @@ impl ConfidentialTransaction {
     let option = SigHashOption {
       sighash_type: SigHashType::All,
       amount: value.to_amount(),
-      value_byte: value.as_byte_data(),
+      value_byte: match value.is_empty() {
+        true => ByteData::default(),
+        _ => value.as_byte_data(),
+      },
     };
     ope.verify_sign(
       &hex_from_bytes(&self.tx),
@@ -2439,7 +2514,10 @@ impl ConfidentialTransaction {
     let option = SigHashOption {
       sighash_type: SigHashType::All,
       amount: value.to_amount(),
-      value_byte: value.as_byte_data(),
+      value_byte: match value.is_empty() {
+        true => ByteData::default(),
+        _ => value.as_byte_data(),
+      },
     };
     ope.verify_sign(
       &hex_from_bytes(&self.tx),
@@ -3444,7 +3522,7 @@ impl ConfidentialTxOperation {
               fee_asset.as_ptr(),
               &mut fee_data.tx_fee,
               &mut fee_data.utxo_fee,
-              false,
+              option.is_blind,
               fee_rate,
             )
           };

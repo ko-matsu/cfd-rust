@@ -122,6 +122,17 @@ impl Network {
       Network::LiquidV1 | Network::ElementsRegtest | Network::CustomChain => true,
     }
   }
+
+  pub fn to_str(&self) -> &str {
+    match self {
+      Network::Mainnet => "mainnet",
+      Network::Testnet => "testnet",
+      Network::Regtest => "regtest",
+      Network::LiquidV1 => "liquidv1",
+      Network::ElementsRegtest => "regtest",
+      Network::CustomChain => "custom",
+    }
+  }
 }
 
 impl fmt::Display for Network {
