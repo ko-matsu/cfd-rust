@@ -393,23 +393,28 @@ impl Default for CoinSelectionData {
 /// A container that stores transaction fee.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct FeeData {
-  pub tx_fee: i64,
+  /// tx outputs and tx base fee.
+  pub txout_fee: i64,
+  /// utxo (tx inputs) fee.
   pub utxo_fee: i64,
 }
 
 impl FeeData {
-  pub fn new(tx_fee: i64, utxo_fee: i64) -> FeeData {
-    FeeData { tx_fee, utxo_fee }
+  pub fn new(txout_fee: i64, utxo_fee: i64) -> FeeData {
+    FeeData {
+      txout_fee,
+      utxo_fee,
+    }
   }
 
   pub fn get_total_fee(&self) -> i64 {
-    self.tx_fee + self.utxo_fee
+    self.txout_fee + self.utxo_fee
   }
 }
 
 impl fmt::Display for FeeData {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    write!(f, "fee[tx:{}, utxo:{}]", &self.tx_fee, self.utxo_fee)
+    write!(f, "fee[tx:{}, utxo:{}]", &self.txout_fee, self.utxo_fee)
   }
 }
 
@@ -2603,7 +2608,7 @@ impl TransactionOperation {
               fee_handle,
               tx_str.as_ptr(),
               empty_str.as_ptr(),
-              &mut fee_data.tx_fee,
+              &mut fee_data.txout_fee,
               &mut fee_data.utxo_fee,
               false,
               fee_rate,

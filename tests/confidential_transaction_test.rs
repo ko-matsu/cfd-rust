@@ -1028,11 +1028,11 @@ mod elements_tests {
     )
     .expect("Fail");
     let fee_data = tx.estimate_fee(&utxos, 0.15, &option).expect("Fail");
-    assert_eq!(549, fee_data.tx_fee);
+    assert_eq!(549, fee_data.txout_fee);
     assert_eq!(206, fee_data.utxo_fee);
-    assert_eq!(755, fee_data.utxo_fee + fee_data.tx_fee);
+    assert_eq!(755, fee_data.utxo_fee + fee_data.txout_fee);
 
-    tx.update_fee_amount(fee_data.utxo_fee + fee_data.tx_fee)
+    tx.update_fee_amount(fee_data.utxo_fee + fee_data.txout_fee)
       .expect("Fail");
   }
 
@@ -1110,9 +1110,9 @@ mod elements_tests {
     let fee_data = tx
       .estimate_fee(&fee_utxos, option.fee_rate, &option)
       .expect("Fail");
-    assert_eq!(482, fee_data.tx_fee);
+    assert_eq!(482, fee_data.txout_fee);
     assert_eq!(19, fee_data.utxo_fee);
-    assert_eq!(501, fee_data.utxo_fee + fee_data.tx_fee);
+    assert_eq!(501, fee_data.utxo_fee + fee_data.txout_fee);
   }
 
   #[test]
@@ -1231,8 +1231,8 @@ mod elements_tests {
     let fee_data = tx
       .estimate_fee(&fee_utxos, option.fee_rate, &option)
       .expect("Fail");
-    assert_eq!(873, fee_data.utxo_fee + fee_data.tx_fee);
-    assert_eq!(726, fee_data.tx_fee);
+    assert_eq!(873, fee_data.utxo_fee + fee_data.txout_fee);
+    assert_eq!(726, fee_data.txout_fee);
     assert_eq!(147, fee_data.utxo_fee);
   }
 
