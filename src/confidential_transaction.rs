@@ -3520,7 +3520,7 @@ impl ConfidentialTxOperation {
               fee_handle,
               tx_str.as_ptr(),
               fee_asset.as_ptr(),
-              &mut fee_data.tx_fee,
+              &mut fee_data.txout_fee,
               &mut fee_data.utxo_fee,
               option.is_blind,
               fee_rate,

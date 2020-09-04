@@ -601,7 +601,7 @@ mod tests {
     let fee_data = tx
       .estimate_fee(&[utxos[1].clone(), utxos[2].clone()], 10.0)
       .expect("Fail");
-    assert_eq!(720, fee_data.tx_fee);
+    assert_eq!(720, fee_data.txout_fee);
     assert_eq!(1800, fee_data.utxo_fee);
   }
 
@@ -716,8 +716,8 @@ mod tests {
     let fee_data = fund_tx
       .estimate_fee(&fee_utxos, fee_option.fee_rate)
       .expect("Fail");
-    assert_eq!(7460, fee_data.tx_fee + fee_data.utxo_fee);
-    assert_eq!(2060, fee_data.tx_fee);
+    assert_eq!(7460, fee_data.txout_fee + fee_data.utxo_fee);
+    assert_eq!(2060, fee_data.txout_fee);
     assert_eq!(5400, fee_data.utxo_fee);
   }
 
