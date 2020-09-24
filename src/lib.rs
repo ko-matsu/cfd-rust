@@ -73,7 +73,7 @@ pub use schnorr::AdaptorPair;
 pub use schnorr::AdaptorProof;
 pub use schnorr::AdaptorSignature;
 pub use schnorr::EcdsaAdaptorUtil;
-pub use schnorr::SchnorrNonce;
+pub use schnorr::SchnorrPubkey;
 pub use schnorr::SchnorrSignature;
 pub use schnorr::SchnorrUtil;
 pub use schnorr::ADAPTOR_PROOF_SIZE;

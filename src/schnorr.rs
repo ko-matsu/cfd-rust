@@ -422,7 +422,7 @@ impl Default for EcdsaAdaptorUtil {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SchnorrSignature {
   data: Vec<u8>,
-  nonce: SchnorrNonce,
+  nonce: SchnorrPubkey,
   key: Privkey,
 }
 
@@ -476,7 +476,7 @@ impl SchnorrSignature {
     let result = match error_code {
       0 => {
         let str_list = unsafe { collect_multi_cstring_and_free(&[nonce_hex, key_hex]) }?;
-        let nonce = SchnorrNonce::from_str(&str_list[0])?;
+        let nonce = SchnorrPubkey::from_str(&str_list[0])?;
         let key = Privkey::from_str(&str_list[1])?;
         Ok(SchnorrSignature { data, nonce, key })
       }
@@ -502,7 +502,7 @@ impl SchnorrSignature {
   }
 
   #[inline]
-  pub fn as_nonce(&self) -> &SchnorrNonce {
+  pub fn as_nonce(&self) -> &SchnorrPubkey {
     &self.nonce
   }
 
@@ -531,13 +531,13 @@ impl FromStr for SchnorrSignature {
 
 /// A container that stores a schnorr nonce.
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct SchnorrNonce {
+pub struct SchnorrPubkey {
   data: [u8; SCHNORR_NONCE_SIZE],
 }
 
-impl SchnorrNonce {
-  fn from_bytes(data: &[u8]) -> SchnorrNonce {
-    let mut nonce = SchnorrNonce {
+impl SchnorrPubkey {
+  fn from_bytes(data: &[u8]) -> SchnorrPubkey {
+    let mut nonce = SchnorrPubkey {
       data: [0; SCHNORR_NONCE_SIZE],
     };
     nonce.data = copy_array_32byte(&data);
@@ -552,13 +552,13 @@ impl SchnorrNonce {
   /// # Example
   ///
   /// ```
-  /// use cfd_rust::SchnorrNonce;
+  /// use cfd_rust::SchnorrPubkey;
   /// let bytes = [1; 32];
-  /// let nonce = SchnorrNonce::from_slice(&bytes).expect("Fail");
+  /// let nonce = SchnorrPubkey::from_slice(&bytes).expect("Fail");
   /// ```
-  pub fn from_slice(data: &[u8]) -> Result<SchnorrNonce, CfdError> {
+  pub fn from_slice(data: &[u8]) -> Result<SchnorrPubkey, CfdError> {
     match data.len() {
-      SCHNORR_NONCE_SIZE => Ok(SchnorrNonce::from_bytes(data)),
+      SCHNORR_NONCE_SIZE => Ok(SchnorrPubkey::from_bytes(data)),
       _ => Err(CfdError::IllegalArgument("invalid nonce.".to_string())),
     }
   }
@@ -571,12 +571,12 @@ impl SchnorrNonce {
   /// # Example
   ///
   /// ```
-  /// use cfd_rust::SchnorrNonce;
+  /// use cfd_rust::SchnorrPubkey;
   /// let bytes = vec![1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1];
-  /// let nonce = SchnorrNonce::from_vec(bytes).expect("Fail");
+  /// let nonce = SchnorrPubkey::from_vec(bytes).expect("Fail");
   /// ```
-  pub fn from_vec(data: Vec<u8>) -> Result<SchnorrNonce, CfdError> {
-    SchnorrNonce::from_slice(&data)
+  pub fn from_vec(data: Vec<u8>) -> Result<SchnorrPubkey, CfdError> {
+    SchnorrPubkey::from_slice(&data)
   }
 
   #[inline]
@@ -599,26 +599,26 @@ impl SchnorrNonce {
   }
 }
 
-impl fmt::Display for SchnorrNonce {
+impl fmt::Display for SchnorrPubkey {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     let s = hex::encode(&self.data);
     write!(f, "{}", s)
   }
 }
 
-impl FromStr for SchnorrNonce {
+impl FromStr for SchnorrPubkey {
   type Err = CfdError;
-  fn from_str(text: &str) -> Result<SchnorrNonce, CfdError> {
+  fn from_str(text: &str) -> Result<SchnorrPubkey, CfdError> {
     match byte_from_hex(text) {
-      Ok(byte_array) => SchnorrNonce::from_vec(byte_array),
+      Ok(byte_array) => SchnorrPubkey::from_vec(byte_array),
       Err(e) => Err(e),
     }
   }
 }
 
-impl Default for SchnorrNonce {
-  fn default() -> SchnorrNonce {
-    SchnorrNonce {
+impl Default for SchnorrPubkey {
+  fn default() -> SchnorrPubkey {
+    SchnorrPubkey {
       data: [0; SCHNORR_NONCE_SIZE],
     }
   }
@@ -741,19 +741,19 @@ impl SchnorrUtil {
   /// # Example
   ///
   /// ```
-  /// use cfd_rust::{SchnorrUtil, SchnorrNonce, ByteData, Pubkey};
+  /// use cfd_rust::{SchnorrUtil, SchnorrPubkey, ByteData};
   /// use std::str::FromStr;
   /// let msg = ByteData::from_str("e48441762fb75010b2aa31a512b62b4148aa3fb08eb0765d76b252559064a614").expect("Fail");
-  /// let nonce = SchnorrNonce::from_str("f14d7e54ff58c5d019ce9986be4a0e8b7d643bd08ef2cdf1099e1a457865b547").expect("Fail");
-  /// let pubkey = Pubkey::from_str("02b33cc9edc096d0a83416964bd3c6247b8fecd256e4efa7870d2c854bdeb33390").expect("Fail");
+  /// let nonce = SchnorrPubkey::from_str("f14d7e54ff58c5d019ce9986be4a0e8b7d643bd08ef2cdf1099e1a457865b547").expect("Fail");
+  /// let pubkey = SchnorrPubkey::from_str("b33cc9edc096d0a83416964bd3c6247b8fecd256e4efa7870d2c854bdeb33390").expect("Fail");
   /// let obj = SchnorrUtil::new();
   /// let point = obj.compute_sig_point(&msg, &nonce, &pubkey).expect("Fail");
   /// ```
   pub fn compute_sig_point(
     &self,
     msg: &ByteData,
-    nonce: &SchnorrNonce,
-    pubkey: &Pubkey,
+    nonce: &SchnorrPubkey,
+    pubkey: &SchnorrPubkey,
   ) -> Result<Pubkey, CfdError> {
     let msg_hex = alloc_c_string(&msg.to_hex())?;
     let nonce_hex = alloc_c_string(&nonce.to_hex())?;
@@ -790,11 +790,11 @@ impl SchnorrUtil {
   /// # Example
   ///
   /// ```
-  /// use cfd_rust::{SchnorrUtil, SchnorrSignature, ByteData, Pubkey};
+  /// use cfd_rust::{SchnorrUtil, SchnorrSignature, ByteData, SchnorrPubkey};
   /// use std::str::FromStr;
-  /// let sig = SchnorrSignature::from_str("f14d7e54ff58c5d019ce9986be4a0e8b7d643bd08ef2cdf1099e1a457865b5477c988c51634a8dc955950a58ff5dc8c506ddb796121e6675946312680c26cf33").expect("Fail");
+  /// let sig = SchnorrSignature::from_str("6470fd1303dda4fda717b9837153c24a6eab377183fc438f939e0ed2b620e9ee5077c4a8b8dca28963d772a94f5f0ddf598e1c47c137f91933274c7c3edadce8").expect("Fail");
   /// let msg = ByteData::from_str("e48441762fb75010b2aa31a512b62b4148aa3fb08eb0765d76b252559064a614").expect("Fail");
-  /// let pubkey = Pubkey::from_str("02b33cc9edc096d0a83416964bd3c6247b8fecd256e4efa7870d2c854bdeb33390").expect("Fail");
+  /// let pubkey = SchnorrPubkey::from_str("b33cc9edc096d0a83416964bd3c6247b8fecd256e4efa7870d2c854bdeb33390").expect("Fail");
   /// let obj = SchnorrUtil::new();
   /// let is_verify = obj.verify(&sig, &msg, &pubkey).expect("Fail");
   /// ```
@@ -802,7 +802,7 @@ impl SchnorrUtil {
     &self,
     signature: &SchnorrSignature,
     msg: &ByteData,
-    pubkey: &Pubkey,
+    pubkey: &SchnorrPubkey,
   ) -> Result<bool, CfdError> {
     let sig_hex = alloc_c_string(&signature.to_hex())?;
     let msg_hex = alloc_c_string(&msg.to_hex())?;
