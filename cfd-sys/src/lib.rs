@@ -368,6 +368,11 @@ fns! {
     message: *const i8,
     pubkey: *const i8,
   ) -> c_int;
+  pub fn CfdGetSchnorrPubkeyFromPrivkey(
+    handle: *const c_void,
+    privkey: *const i8,
+    pubkey: *mut *mut c_char,
+  ) -> c_int;
   pub fn CfdSignSchnorr(
     handle: *const c_void,
     message: *const i8,

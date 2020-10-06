@@ -79,6 +79,9 @@ mod tests {
     SchnorrSignature::from_str("6470fd1303dda4fda717b9837153c24a6eab377183fc438f939e0ed2b620e9ee5077c4a8b8dca28963d772a94f5f0ddf598e1c47c137f91933274c7c3edadce8").expect("Fail");
 
     let obj = SchnorrUtil::new();
+    let schnorr_pubkey = SchnorrPubkey::from_privkey(&sk).expect("Fail");
+    assert_eq!(pubkey.to_hex(), schnorr_pubkey.to_hex());
+
     let sig1 = obj.sign(&msg, &sk, &aux_rand).expect("Fail");
     assert_eq!(signature.to_hex(), sig1.to_hex());
 
