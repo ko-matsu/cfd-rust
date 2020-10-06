@@ -590,7 +590,7 @@ impl SchnorrPubkey {
   /// use cfd_rust::{SchnorrPubkey, Privkey};
   /// use std::str::FromStr;
   /// let key = Privkey::from_str("475697a71a74ff3f2a8f150534e9b67d4b0b6561fab86fcaa51f8c9d6c9db8c6").expect("Fail");
-  /// let pubkey = SchnorrPubkey::from_privkey(key).expect("Fail");
+  /// let pubkey = SchnorrPubkey::from_privkey(&key).expect("Fail");
   /// ```
   pub fn from_privkey(key: &Privkey) -> Result<SchnorrPubkey, CfdError> {
     let key_hex = alloc_c_string(&key.to_hex())?;
