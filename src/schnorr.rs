@@ -15,7 +15,7 @@ use std::str::FromStr;
 use self::cfd_sys::{
   CfdAdaptEcdsaAdaptor, CfdComputeSchnorrSigPoint, CfdExtractEcdsaAdaptorSecret,
   CfdSignEcdsaAdaptor, CfdSignSchnorr, CfdSignSchnorrWithNonce, CfdSplitSchnorrSignature,
-  CfdVerifyEcdsaAdaptor, CfdVerifySchnorr,
+  CfdVerifyEcdsaAdaptor, CfdVerifySchnorr, CfdGetSchnorrPubkeyFromPrivkey,
 };
 
 /// adaptor signature size.
@@ -198,7 +198,7 @@ pub struct AdaptorPair {
   pub proof: AdaptorProof,
 }
 
-/// A container that stores ecdsAn adaptor API.
+/// A container that stores ecdsa adaptor API.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct EcdsaAdaptorUtil {}
 
@@ -554,7 +554,7 @@ impl SchnorrPubkey {
   /// ```
   /// use cfd_rust::SchnorrPubkey;
   /// let bytes = [1; 32];
-  /// let nonce = SchnorrPubkey::from_slice(&bytes).expect("Fail");
+  /// let pubkey = SchnorrPubkey::from_slice(&bytes).expect("Fail");
   /// ```
   pub fn from_slice(data: &[u8]) -> Result<SchnorrPubkey, CfdError> {
     match data.len() {
@@ -573,10 +573,45 @@ impl SchnorrPubkey {
   /// ```
   /// use cfd_rust::SchnorrPubkey;
   /// let bytes = vec![1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1];
-  /// let nonce = SchnorrPubkey::from_vec(bytes).expect("Fail");
+  /// let pubkey = SchnorrPubkey::from_vec(bytes).expect("Fail");
   /// ```
   pub fn from_vec(data: Vec<u8>) -> Result<SchnorrPubkey, CfdError> {
     SchnorrPubkey::from_slice(&data)
+  }
+
+  /// Generate from privkey.
+  ///
+  /// # Arguments
+  /// * `key` - A private key.
+  ///
+  /// # Example
+  ///
+  /// ```
+  /// use cfd_rust::{SchnorrPubkey, Privkey};
+  /// use std::str::FromStr;
+  /// let key = Privkey::from_str("475697a71a74ff3f2a8f150534e9b67d4b0b6561fab86fcaa51f8c9d6c9db8c6").expect("Fail");
+  /// let pubkey = SchnorrPubkey::from_privkey(&key).expect("Fail");
+  /// ```
+  pub fn from_privkey(key: &Privkey) -> Result<SchnorrPubkey, CfdError> {
+    let key_hex = alloc_c_string(&key.to_hex())?;
+    let handle = ErrorHandle::new()?;
+    let mut pubkey_hex: *mut c_char = ptr::null_mut();
+    let error_code = unsafe {
+      CfdGetSchnorrPubkeyFromPrivkey(
+        handle.as_handle(),
+        key_hex.as_ptr(),
+        &mut pubkey_hex,
+      )
+    };
+    let result = match error_code {
+      0 => {
+        let pubkey = unsafe { collect_cstring_and_free(pubkey_hex) }?;
+        SchnorrPubkey::from_str(&pubkey)
+      }
+      _ => Err(handle.get_error(error_code)),
+    };
+    handle.free_handle();
+    result
   }
 
   #[inline]
