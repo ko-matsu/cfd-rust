@@ -13,9 +13,10 @@ use std::result::Result::{Err, Ok};
 use std::str::FromStr;
 
 use self::cfd_sys::{
-  CfdAdaptEcdsaAdaptor, CfdComputeSchnorrSigPoint, CfdExtractEcdsaAdaptorSecret,
-  CfdSignEcdsaAdaptor, CfdSignSchnorr, CfdSignSchnorrWithNonce, CfdSplitSchnorrSignature,
-  CfdVerifyEcdsaAdaptor, CfdVerifySchnorr, CfdGetSchnorrPubkeyFromPrivkey,
+  CfdAdaptEcdsaAdaptor, CfdCheckTweakAddFromSchnorrPubkey, CfdComputeSchnorrSigPoint,
+  CfdExtractEcdsaAdaptorSecret, CfdGetSchnorrPubkeyFromPrivkey, CfdGetSchnorrPubkeyFromPubkey,
+  CfdSchnorrKeyPairTweakAdd, CfdSchnorrPubkeyTweakAdd, CfdSignEcdsaAdaptor, CfdSignSchnorr,
+  CfdSignSchnorrWithNonce, CfdSplitSchnorrSignature, CfdVerifyEcdsaAdaptor, CfdVerifySchnorr,
 };
 
 /// adaptor signature size.
@@ -590,23 +591,115 @@ impl SchnorrPubkey {
   /// use cfd_rust::{SchnorrPubkey, Privkey};
   /// use std::str::FromStr;
   /// let key = Privkey::from_str("475697a71a74ff3f2a8f150534e9b67d4b0b6561fab86fcaa51f8c9d6c9db8c6").expect("Fail");
-  /// let pubkey = SchnorrPubkey::from_privkey(&key).expect("Fail");
+  /// let pubkey_ret = SchnorrPubkey::from_privkey(&key).expect("Fail");
+  /// let (pubkey, parity) = pubkey_ret;
   /// ```
-  pub fn from_privkey(key: &Privkey) -> Result<SchnorrPubkey, CfdError> {
+  pub fn from_privkey(key: &Privkey) -> Result<(SchnorrPubkey, bool), CfdError> {
     let key_hex = alloc_c_string(&key.to_hex())?;
     let handle = ErrorHandle::new()?;
     let mut pubkey_hex: *mut c_char = ptr::null_mut();
+    let mut parity = false;
     let error_code = unsafe {
       CfdGetSchnorrPubkeyFromPrivkey(
         handle.as_handle(),
         key_hex.as_ptr(),
         &mut pubkey_hex,
+        &mut parity,
       )
     };
     let result = match error_code {
       0 => {
         let pubkey = unsafe { collect_cstring_and_free(pubkey_hex) }?;
-        SchnorrPubkey::from_str(&pubkey)
+        let pubkey_obj = SchnorrPubkey::from_str(&pubkey)?;
+        Ok((pubkey_obj, parity))
+      }
+      _ => Err(handle.get_error(error_code)),
+    };
+    handle.free_handle();
+    result
+  }
+
+  /// Generate from pubkey.
+  ///
+  /// # Arguments
+  /// * `key` - A public key.
+  ///
+  /// # Example
+  ///
+  /// ```
+  /// use cfd_rust::{SchnorrPubkey, Pubkey};
+  /// use std::str::FromStr;
+  /// let key = Pubkey::from_str("03b33cc9edc096d0a83416964bd3c6247b8fecd256e4efa7870d2c854bdeb33390").expect("Fail");
+  /// let pubkey_ret = SchnorrPubkey::from_pubkey(&key).expect("Fail");
+  /// let (pubkey, parity) = pubkey_ret;
+  /// ```
+  pub fn from_pubkey(key: &Pubkey) -> Result<(SchnorrPubkey, bool), CfdError> {
+    let key_hex = alloc_c_string(&key.to_hex())?;
+    let handle = ErrorHandle::new()?;
+    let mut pubkey_hex: *mut c_char = ptr::null_mut();
+    let mut parity = false;
+    let error_code = unsafe {
+      CfdGetSchnorrPubkeyFromPubkey(
+        handle.as_handle(),
+        key_hex.as_ptr(),
+        &mut pubkey_hex,
+        &mut parity,
+      )
+    };
+    let result = match error_code {
+      0 => {
+        let pubkey = unsafe { collect_cstring_and_free(pubkey_hex) }?;
+        let pubkey_obj = SchnorrPubkey::from_str(&pubkey)?;
+        Ok((pubkey_obj, parity))
+      }
+      _ => Err(handle.get_error(error_code)),
+    };
+    handle.free_handle();
+    result
+  }
+
+  /// Generate tweaked key pair from privkey.
+  ///
+  /// # Arguments
+  /// * `key` - A private key.
+  /// * `data` - A tweaked 32 byte buffer.
+  ///
+  /// # Example
+  ///
+  /// ```
+  /// use cfd_rust::{SchnorrPubkey, Privkey, ByteData};
+  /// use std::str::FromStr;
+  /// let key = Privkey::from_str("475697a71a74ff3f2a8f150534e9b67d4b0b6561fab86fcaa51f8c9d6c9db8c6").expect("Fail");
+  /// let tweak = ByteData::from_str("e48441762fb75010b2aa31a512b62b4148aa3fb08eb0765d76b252559064a614").expect("Fail");
+  /// let pubkey_ret = SchnorrPubkey::get_tweak_add_from_privkey(&key, tweak.to_slice()).expect("Fail");
+  /// let (pubkey, parity, privkey) = pubkey_ret;
+  /// ```
+  pub fn get_tweak_add_from_privkey(
+    key: &Privkey,
+    data: &[u8],
+  ) -> Result<(SchnorrPubkey, bool, Privkey), CfdError> {
+    let key_hex = alloc_c_string(&key.to_hex())?;
+    let tweak_hex = alloc_c_string(&hex_from_bytes(data))?;
+    let handle = ErrorHandle::new()?;
+    let mut pubkey_hex: *mut c_char = ptr::null_mut();
+    let mut privkey_hex: *mut c_char = ptr::null_mut();
+    let mut parity = false;
+    let error_code = unsafe {
+      CfdSchnorrKeyPairTweakAdd(
+        handle.as_handle(),
+        key_hex.as_ptr(),
+        tweak_hex.as_ptr(),
+        &mut pubkey_hex,
+        &mut parity,
+        &mut privkey_hex,
+      )
+    };
+    let result = match error_code {
+      0 => {
+        let str_list = unsafe { collect_multi_cstring_and_free(&[pubkey_hex, privkey_hex]) }?;
+        let pubkey_obj = SchnorrPubkey::from_str(&str_list[0])?;
+        let privkey_obj = Privkey::from_str(&str_list[1])?;
+        Ok((pubkey_obj, parity, privkey_obj))
       }
       _ => Err(handle.get_error(error_code)),
     };
@@ -631,6 +724,91 @@ impl SchnorrPubkey {
 
   pub fn as_key(&self) -> Result<Privkey, CfdError> {
     Privkey::from_slice(&self.data)
+  }
+
+  /// Generate tweaked schnorr pubkey.
+  ///
+  /// # Arguments
+  /// * `data` - A tweaked 32 byte buffer.
+  ///
+  /// # Example
+  ///
+  /// ```
+  /// use cfd_rust::{SchnorrPubkey, ByteData};
+  /// use std::str::FromStr;
+  /// let key = SchnorrPubkey::from_str("b33cc9edc096d0a83416964bd3c6247b8fecd256e4efa7870d2c854bdeb33390").expect("Fail");
+  /// let tweak = ByteData::from_str("e48441762fb75010b2aa31a512b62b4148aa3fb08eb0765d76b252559064a614").expect("Fail");
+  /// let pubkey_ret = key.tweak_add(tweak.to_slice()).expect("Fail");
+  /// let (pubkey, parity) = pubkey_ret;
+  /// ```
+  pub fn tweak_add(&self, data: &[u8]) -> Result<(SchnorrPubkey, bool), CfdError> {
+    let key_hex = alloc_c_string(&self.to_hex())?;
+    let tweak_hex = alloc_c_string(&hex_from_bytes(data))?;
+    let handle = ErrorHandle::new()?;
+    let mut pubkey_hex: *mut c_char = ptr::null_mut();
+    let mut parity = false;
+    let error_code = unsafe {
+      CfdSchnorrPubkeyTweakAdd(
+        handle.as_handle(),
+        key_hex.as_ptr(),
+        tweak_hex.as_ptr(),
+        &mut pubkey_hex,
+        &mut parity,
+      )
+    };
+    let result = match error_code {
+      0 => {
+        let pubkey = unsafe { collect_cstring_and_free(pubkey_hex) }?;
+        let pubkey_obj = SchnorrPubkey::from_str(&pubkey)?;
+        Ok((pubkey_obj, parity))
+      }
+      _ => Err(handle.get_error(error_code)),
+    };
+    handle.free_handle();
+    result
+  }
+
+  /// Generate tweaked schnorr pubkey.
+  ///
+  /// # Arguments
+  /// * `data` - A tweaked 32 byte buffer.
+  ///
+  /// # Example
+  ///
+  /// ```
+  /// use cfd_rust::{SchnorrPubkey, ByteData};
+  /// use std::str::FromStr;
+  /// let key = SchnorrPubkey::from_str("b33cc9edc096d0a83416964bd3c6247b8fecd256e4efa7870d2c854bdeb33390").expect("Fail");
+  /// let tweak = ByteData::from_str("e48441762fb75010b2aa31a512b62b4148aa3fb08eb0765d76b252559064a614").expect("Fail");
+  /// let tweaked_key = SchnorrPubkey::from_str("1fc8e882e34cc7942a15f39ffaebcbdf58a19239bcb17b7f5aa88e0eb808f906").expect("Fail");
+  /// let is_valid = tweaked_key.is_tweaked(true, &key, tweak.to_slice()).expect("Fail");
+  /// ```
+  pub fn is_tweaked(
+    &self,
+    parity: bool,
+    base_pubkey: &SchnorrPubkey,
+    data: &[u8],
+  ) -> Result<bool, CfdError> {
+    let key_hex = alloc_c_string(&self.to_hex())?;
+    let base_key_hex = alloc_c_string(&base_pubkey.to_hex())?;
+    let tweak_hex = alloc_c_string(&hex_from_bytes(data))?;
+    let handle = ErrorHandle::new()?;
+    let error_code = unsafe {
+      CfdCheckTweakAddFromSchnorrPubkey(
+        handle.as_handle(),
+        key_hex.as_ptr(),
+        parity,
+        base_key_hex.as_ptr(),
+        tweak_hex.as_ptr(),
+      )
+    };
+    let result = match error_code {
+      0 => Ok(true),
+      7 => Ok(false),
+      _ => Err(handle.get_error(error_code)),
+    };
+    handle.free_handle();
+    result
   }
 }
 
