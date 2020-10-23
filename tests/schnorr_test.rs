@@ -56,7 +56,7 @@ mod tests {
   }
 
   #[test]
-  fn schnorr_test() {
+  fn schnorr_util_test() {
     // default
     let msg =
       ByteData::from_str("e48441762fb75010b2aa31a512b62b4148aa3fb08eb0765d76b252559064a614")
@@ -79,9 +79,6 @@ mod tests {
     SchnorrSignature::from_str("6470fd1303dda4fda717b9837153c24a6eab377183fc438f939e0ed2b620e9ee5077c4a8b8dca28963d772a94f5f0ddf598e1c47c137f91933274c7c3edadce8").expect("Fail");
 
     let obj = SchnorrUtil::new();
-    let schnorr_pubkey = SchnorrPubkey::from_privkey(&sk).expect("Fail");
-    assert_eq!(pubkey.to_hex(), schnorr_pubkey.to_hex());
-
     let sig1 = obj.sign(&msg, &sk, &aux_rand).expect("Fail");
     assert_eq!(signature.to_hex(), sig1.to_hex());
 
@@ -105,5 +102,54 @@ mod tests {
     let expected_privkey = "5077c4a8b8dca28963d772a94f5f0ddf598e1c47c137f91933274c7c3edadce8";
     assert_eq!(expected_nonce, sig1.as_nonce().to_hex());
     assert_eq!(expected_privkey, sig1.as_key().to_hex());
+  }
+
+  #[test]
+  fn schnorr_pubkey_test() {
+    // default
+    let tweak =
+      ByteData::from_str("e48441762fb75010b2aa31a512b62b4148aa3fb08eb0765d76b252559064a614")
+        .expect("Fail");
+    let sk = Privkey::from_str("688c77bc2d5aaff5491cf309d4753b732135470d05b7b2cd21add0744fe97bef")
+      .expect("Fail");
+    let pk = Pubkey::from_str("03b33cc9edc096d0a83416964bd3c6247b8fecd256e4efa7870d2c854bdeb33390")
+      .expect("Fail");
+    let pubkey =
+      SchnorrPubkey::from_str("b33cc9edc096d0a83416964bd3c6247b8fecd256e4efa7870d2c854bdeb33390")
+        .expect("Fail");
+    let exp_tweaked_pk =
+      SchnorrPubkey::from_str("1fc8e882e34cc7942a15f39ffaebcbdf58a19239bcb17b7f5aa88e0eb808f906")
+        .expect("Fail");
+    let exp_tweaked_sk =
+      Privkey::from_str("7bf7c9ba025ca01b698d3e9b3e40efce2774f8a388f8c390550481e1407b2a25")
+        .expect("Fail");
+
+    let (schnorr_pubkey, parity) = SchnorrPubkey::from_privkey(&sk).expect("Fail");
+    assert_eq!(pubkey.to_hex(), schnorr_pubkey.to_hex());
+    assert_eq!(true, parity);
+
+    let (schnorr_pubkey, parity) = SchnorrPubkey::from_pubkey(&pk).expect("Fail");
+    assert_eq!(pubkey.to_hex(), schnorr_pubkey.to_hex());
+    assert_eq!(true, parity);
+
+    let (tweaked_pubkey, tweaked_parity) = pubkey.tweak_add(tweak.to_slice()).expect("Fail");
+    assert_eq!(exp_tweaked_pk.to_hex(), tweaked_pubkey.to_hex());
+    assert_eq!(true, tweaked_parity);
+
+    let gen_key_ret =
+      SchnorrPubkey::get_tweak_add_from_privkey(&sk, tweak.to_slice()).expect("Fail");
+    let (tweaked_pubkey, tweaked_parity, tweaked_privkey) = gen_key_ret;
+    assert_eq!(exp_tweaked_pk.to_hex(), tweaked_pubkey.to_hex());
+    assert_eq!(true, tweaked_parity);
+    assert_eq!(exp_tweaked_sk.to_hex(), tweaked_privkey.to_hex());
+
+    let is_valid = tweaked_pubkey
+      .is_tweaked(true, &pubkey, tweak.to_slice())
+      .expect("Fail");
+    assert_eq!(true, is_valid);
+    let is_valid = tweaked_pubkey
+      .is_tweaked(false, &pubkey, tweak.to_slice())
+      .expect("Fail");
+    assert_eq!(false, is_valid);
   }
 }
