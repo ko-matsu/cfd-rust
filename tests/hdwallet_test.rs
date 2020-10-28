@@ -150,7 +150,7 @@ mod tests {
       "0101010101010101010101010101010101010101010101010101010101010101",
       ByteData::from_slice(&entropy).to_hex()
     );
-    
+
     let wallet = HDWallet::from_mnemonic(
       "absurd amount doctor acoustic avoid letter advice cage absurd amount doctor acoustic avoid letter advice cage absurd amount doctor acoustic avoid letter advice comic",
       MnemonicLanguage::EN,

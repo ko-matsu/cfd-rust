@@ -372,6 +372,35 @@ fns! {
     handle: *const c_void,
     privkey: *const i8,
     pubkey: *mut *mut c_char,
+    parity: *mut bool,
+  ) -> c_int;
+  pub fn CfdGetSchnorrPubkeyFromPubkey(
+    handle: *const c_void,
+    pubkey: *const i8,
+    schnorr_pubkey: *mut *mut c_char,
+    parity: *mut bool,
+  ) -> c_int;
+  pub fn CfdSchnorrPubkeyTweakAdd(
+    handle: *const c_void,
+    pubkey: *const i8,
+    tweak: *const i8,
+    output: *mut *mut c_char,
+    parity: *mut bool,
+  ) -> c_int;
+  pub fn CfdSchnorrKeyPairTweakAdd(
+    handle: *const c_void,
+    privkey: *const i8,
+    tweak: *const i8,
+    tweaked_pubkey: *mut *mut c_char,
+    tweaked_parity: *mut bool,
+    tweaked_privkey: *mut *mut c_char,
+  ) -> c_int;
+  pub fn CfdCheckTweakAddFromSchnorrPubkey(
+    handle: *const c_void,
+    tweaked_pubkey: *const i8,
+    tweaked_parity: bool,
+    base_pubkey: *const i8,
+    tweak: *const i8,
   ) -> c_int;
   pub fn CfdSignSchnorr(
     handle: *const c_void,
