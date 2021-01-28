@@ -7,9 +7,10 @@
   - can compile c++11
 - CMake (3.14.3 or higher)
 
-### Windows 
+### Windows
 
 download and install files.
+
 - [Rustup](https://rustup.rs/)
 - [CMake](https://cmake.org/) (3.14.3 or higher)
 - MSVC
@@ -68,6 +69,7 @@ cargo build
 ### Prepare cfd native library from releases asset (Windows)
 
 Using cmake find_package.
+
 1. get releases asset. (ex. https://github.com/cryptogarageinc/cfd/releases/download/v0.1.12/cfd-v0.1.12-win-vs2019-x86_64.zip )
 2. Expand to PATH
 
@@ -130,11 +132,13 @@ However, depending on the connection settings of GitHub, you may only be able to
 As a countermeasure, forcibly establish SSH connection by setting `CFD_CMAKE_GIT_SSH=1` in the environment variable.
 
 - Windows: (On the command line. Or set from the system setting screen.)
+
 ```
 set CFD_CMAKE_GIT_SSH=1
 ```
 
 - MacOS & Linux(Ubuntu):
+
 ```
 export CFD_CMAKE_GIT_SSH=1
 ```
@@ -161,11 +165,13 @@ This phenomenon is due to the `git update` related command.
 Please set an environment variable that skips update processing.
 
 - Windows: (On the command line. Or set from the system setting screen.)
+
 ```
 set CFD_CMAKE_GIT_SKIP_UPDATE=1
 ```
 
 - MacOS & Linux(Ubuntu):
+
 ```
 export CFD_CMAKE_GIT_SKIP_UPDATE=1
 ```
