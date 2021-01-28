@@ -29,6 +29,20 @@ pub const FEE_OPT_BLIND_MINIMUM_BITS: c_int = 2;
 
 pub const DEFAULT_BLIND_MINIMUM_BITS: c_int = 52;
 
+pub const PSBT_RECORD_TYPE_GLOBAL: c_int = 1;
+pub const PSBT_RECORD_TYPE_INPUT: c_int = 2;
+pub const PSBT_RECORD_TYPE_OUTPUT: c_int = 3;
+
+pub const PSBT_RECORD_INPUT_SIGNATURE: c_int = 1;
+pub const PSBT_RECORD_INPUT_BIP32: c_int = 2;
+pub const PSBT_RECORD_OUTPUT_BIP32: c_int = 3;
+pub const PSBT_RECORD_GLOBAL_XPUB: c_int = 4;
+
+pub const PSBT_OPT_ESTIMATE_FEE_RATE: c_int = 1;
+pub const PSBT_OPT_DUST_FEE_RATE: c_int = 2;
+pub const PSBT_OPT_LONG_TERM_FEE_RATE: c_int = 3;
+pub const PSBT_OPT_KNAPSACK_MIN_CHANGE: c_int = 4;
+
 // references: https://github.com/rust-lang/libz-sys
 #[rustfmt::skip]
 macro_rules! fns {
@@ -66,6 +80,26 @@ fns! {
     ignore_version_info: bool,
     value_hex: *mut *mut c_char,
   ) -> c_int;
+  pub fn CfdEncryptAES(
+    handle: *const c_void, key: *const c_char, cbc_iv: *const c_char, buffer: *const c_char,
+    output: *mut *mut c_char) -> c_int;
+  pub fn CfdDecryptAES(
+    handle: *const c_void, key: *const c_char, cbc_iv: *const c_char, buffer: *const c_char,
+    output: *mut *mut c_char) -> c_int;
+  pub fn CfdEncodeBase64(handle: *const c_void, buffer: *const c_char, output: *mut *mut c_char) -> c_int;
+  pub fn CfdDecodeBase64(handle: *const c_void, base64: *const c_char, output: *mut *mut c_char) -> c_int;
+  pub fn CfdEncodeBase58(
+    handle: *const c_void, buffer: *const c_char, use_checksum: bool, output: *mut *mut c_char) -> c_int;
+  pub fn CfdDecodeBase58(
+    handle: *const c_void, base58: *const c_char, use_checksum: bool, output: *mut *mut c_char) -> c_int;
+  pub fn CfdRipemd160(
+    handle: *const c_void, message: *const c_char, has_text: bool, output: *mut *mut c_char) -> c_int;
+  pub fn CfdSha256(
+    handle: *const c_void, message: *const c_char, has_text: bool, output: *mut *mut c_char) -> c_int;
+  pub fn CfdHash160(
+    handle: *const c_void, message: *const c_char, has_text: bool, output: *mut *mut c_char) -> c_int;
+  pub fn CfdHash256(
+    handle: *const c_void, message: *const c_char, has_text: bool, output: *mut *mut c_char) -> c_int;
   pub fn CfdCreateConfidentialAddress(
     handle: *const c_void,
     address: *const i8,
@@ -293,6 +327,11 @@ fns! {
     wif: *const i8,
     is_compressed: bool,
     pubkey: *mut *mut c_char,
+  ) -> c_int;
+  pub fn CfdGetPubkeyFingerprint(
+    handle: *const c_void,
+    pubkey: *const c_char,
+    fingerprint: *mut *mut c_char,
   ) -> c_int;
   pub fn CfdCalculateEcSignature(
     handle: *const c_void,
@@ -991,12 +1030,10 @@ fns! {
       direct_locking_script: *const c_char, index: *mut c_uint) -> c_int;
   pub fn CfdInitializeConfidentialTx(
       handle: *const c_void, version: c_uint, locktime: c_uint, tx_string: *mut *mut c_char) -> c_int;
-  // Just in case
   pub fn CfdAddConfidentialTxOut(
       handle: *const c_void, tx_hex_string: *const c_char, asset_string: *const c_char,
       value_satoshi: c_longlong, value_commitment: *const c_char, address: *const c_char,
       direct_locking_script: *const c_char, nonce: *const c_char, tx_string: *mut *mut c_char) -> c_int;
-  // Needed
   pub fn CfdUpdateConfidentialTxOut(
       handle: *const c_void, tx_hex_string: *const c_char, index: c_uint,
       asset_string: *const c_char, value_satoshi: c_longlong,
@@ -1054,7 +1091,7 @@ fns! {
       is_issuance_asset: *mut bool, is_issuance_token: *mut bool) -> c_int;
   pub fn CfdFreeBlindHandle(handle: *const c_void, blind_handle: *const c_void) -> c_int;
   pub fn CfdFinalizeElementsMultisigSign(
-      handle: *const c_void, multi_sign_handle: *const c_void, tx_hex_string: *const c_char, txid: *const c_char, vout: c_uint, hash_type: c_int, witness_script: *const c_char,      redeem_script: *const c_char, clear_stack: bool, tx_string: *mut *mut c_char) -> c_int;
+      handle: *const c_void, multi_sign_handle: *const c_void, tx_hex_string: *const c_char, txid: *const c_char, vout: c_uint, hash_type: c_int, witness_script: *const c_char, redeem_script: *const c_char, clear_stack: bool, tx_string: *mut *mut c_char) -> c_int;
   pub fn CfdAddConfidentialTxSignWithPrivkeySimple(
       handle: *const c_void, tx_hex_string: *const c_char, txid: *const c_char, vout: c_uint,
       hash_type: c_int, pubkey: *const c_char, privkey: *const c_char,
@@ -1094,4 +1131,123 @@ fns! {
       handle: *const c_void, create_handle: *const c_void, value_satoshi: c_longlong,
       address: *const c_char, direct_locking_script: *const c_char,
       asset_string: *const c_char, nonce: *const c_char) -> c_int;
+  pub fn CfdCreatePsbtHandle(
+    handle: *const c_void, net_type: c_int, psbt_string: *const c_char,
+    tx_hex_string: *const c_char, version: c_uint, locktime: c_uint,
+    psbt_handle: *mut *mut c_void) -> c_int;
+  pub fn CfdFreePsbtHandle(handle: *const c_void, psbt_handle: *const c_void) -> c_int;
+  pub fn CfdGetPsbtData(
+    handle: *const c_void, psbt_handle: *const c_void, psbt_base64: *mut *mut c_char, psbt_hex: *mut *mut c_char) -> c_int;
+  pub fn CfdGetPsbtGlobalData(
+    handle: *const c_void, psbt_handle: *const c_void, psbt_version: *mut c_uint, base_tx: *mut *mut c_char,
+    txin_count: *mut c_uint, txout_count: *mut c_uint) -> c_int;
+  pub fn CfdJoinPsbt(
+    handle: *const c_void, psbt_handle: *const c_void, psbt_join_base64: *const c_char) -> c_int;
+  pub fn CfdSignPsbt(
+    handle: *const c_void, psbt_handle: *const c_void, privkey: *const c_char, has_grind_r: bool) -> c_int;
+  pub fn CfdCombinePsbt(
+    handle: *const c_void, psbt_handle: *const c_void, psbt_combine_base64: *const c_char) -> c_int;
+  pub fn CfdFinalizePsbt(handle: *const c_void, psbt_handle: *const c_void) -> c_int;
+  pub fn CfdExtractPsbtTransaction(
+    handle: *const c_void, psbt_handle: *const c_void, transaction: *mut *mut c_char) -> c_int;
+  pub fn CfdIsFinalizedPsbt(handle: *const c_void, psbt_handle: *const c_void) -> c_int;
+  pub fn CfdIsFinalizedPsbtInput(
+    handle: *const c_void, psbt_handle: *const c_void, txid: *const c_char, vout: c_uint) -> c_int;
+  pub fn CfdAddPsbtTxInWithPubkey(
+    handle: *const c_void, psbt_handle: *const c_void, txid: *const c_char, vout: c_uint,
+    sequence: c_uint, amount: c_longlong, locking_script: *const c_char,
+    descriptor: *const c_char, full_tx_hex: *const c_char) -> c_int;
+  pub fn CfdAddPsbtTxInWithScript(
+    handle: *const c_void, psbt_handle: *const c_void, txid: *const c_char, vout: c_uint,
+    sequence: c_uint, amount: c_longlong, locking_script: *const c_char,
+    redeem_script: *const c_char, descriptor: *const c_char,
+    full_tx_hex: *const c_char) -> c_int;
+  pub fn CfdSetPsbtTxInBip32Pubkey(
+    handle: *const c_void, psbt_handle: *const c_void, txid: *const c_char, vout: c_uint,
+    pubkey: *const c_char, fingerprint: *const c_char, bip32_path: *const c_char) -> c_int;
+  pub fn CfdSetPsbtSignature(
+    handle: *const c_void, psbt_handle: *const c_void, txid: *const c_char, vout: c_uint,
+    pubkey: *const c_char, der_signature: *const c_char) -> c_int;
+  pub fn CfdSetPsbtSighashType(
+    handle: *const c_void, psbt_handle: *const c_void, txid: *const c_char, vout: c_uint,
+    sighash_type: c_int) -> c_int;
+  pub fn CfdSetPsbtFinalizeScript(
+    handle: *const c_void, psbt_handle: *const c_void, txid: *const c_char, vout: c_uint,
+    scriptsig: *const c_char) -> c_int;
+  pub fn CfdClearPsbtSignData(
+    handle: *const c_void, psbt_handle: *const c_void, txid: *const c_char, vout: c_uint) -> c_int;
+  pub fn CfdGetPsbtSighashType(
+    handle: *const c_void, psbt_handle: *const c_void, txid: *const c_char, vout: c_uint,
+    sighash_type: *mut c_int) -> c_int;
+  pub fn CfdGetPsbtUtxoData(
+    handle: *const c_void, psbt_handle: *const c_void, txid: *const c_char, vout: c_uint,
+    amount: *mut c_longlong, locking_script: *mut *mut c_char, redeem_script: *mut *mut c_char,
+    descriptor: *mut *mut c_char, full_tx_hex: *mut *mut c_char) -> c_int;
+  pub fn CfdGetPsbtUtxoDataByIndex(
+    handle: *const c_void, psbt_handle: *const c_void, index: c_uint, txid: *mut *mut c_char,
+    vout: *mut c_uint, amount: *mut c_longlong, locking_script: *mut *mut c_char,
+    redeem_script: *mut *mut c_char, descriptor: *mut *mut c_char, full_tx_hex: *mut *mut c_char) -> c_int;
+  pub fn CfdAddPsbtTxOutWithPubkey(
+    handle: *const c_void, psbt_handle: *const c_void, amount: c_longlong,
+    locking_script: *const c_char, descriptor: *const c_char, index: *mut c_uint) -> c_int;
+  pub fn CfdAddPsbtTxOutWithScript(
+    handle: *const c_void, psbt_handle: *const c_void, amount: c_longlong,
+    locking_script: *const c_char, redeem_script: *const c_char,
+    descriptor: *const c_char, index: *mut c_uint) -> c_int;
+  pub fn CfdSetPsbtTxOutBip32Pubkey(
+    handle: *const c_void, psbt_handle: *const c_void, index: c_uint, pubkey: *const c_char,
+    fingerprint: *const c_char, bip32_path: *const c_char) -> c_int;
+  pub fn CfdGetPsbtTxInIndex(
+    handle: *const c_void, psbt_handle: *const c_void, txid: *const c_char, vout: c_uint,
+    index: *mut c_uint) -> c_int;
+  pub fn CfdGetPsbtPubkeyRecord(
+    handle: *const c_void, psbt_handle: *const c_void, record_kind: c_int, index: c_uint,
+    pubkey: *const c_char, value: *mut *mut c_char) -> c_int;  // (txin:signature, key. txout:key)
+  pub fn CfdIsFindPsbtPubkeyRecord(
+    handle: *const c_void, psbt_handle: *const c_void, record_kind: c_int, index: c_uint,
+    pubkey: *const c_char) -> c_int;
+  pub fn CfdGetPsbtBip32Data(
+    handle: *const c_void, psbt_handle: *const c_void, record_kind: c_int, index: c_uint,
+    pubkey: *const c_char, fingerprint: *mut *mut c_char, bip32_path: *mut *mut c_char) -> c_int;
+  pub fn CfdGetPsbtPubkeyList(
+    handle: *const c_void, psbt_handle: *const c_void, record_kind: c_int, index: c_uint,
+    list_num: *mut c_uint, pubkey_list_handle: *mut *mut c_void) -> c_int;
+  pub fn CfdGetPsbtPubkeyListData(
+    handle: *const c_void, pubkey_list_handle: *const c_void, index: c_uint, pubkey: *mut *mut c_char,
+    pubkey_hex: *mut *mut c_char) -> c_int;
+  pub fn CfdGetPsbtPubkeyListBip32Data(
+    handle: *const c_void, pubkey_list_handle: *const c_void, index: c_uint, pubkey: *mut *mut c_char,
+    fingerprint: *mut *mut c_char, bip32_path: *mut *mut c_char) -> c_int;
+  pub fn CfdFreePsbtPubkeyList(handle: *const c_void, pubkey_list_handle: *const c_void) -> c_int;
+  pub fn CfdAddPsbtGlobalXpubkey(
+    handle: *const c_void, psbt_handle: *const c_void, xpubkey: *const c_char,
+    fingerprint: *const c_char, bip32_path: *const c_char) -> c_int;
+  pub fn CfdAddPsbtRecord(
+    handle: *const c_void, psbt_handle: *const c_void, record_type: c_int, index: c_uint,
+    key: *const c_char, value: *const c_char) -> c_int;
+  pub fn CfdGetPsbtRecord(
+    handle: *const c_void, psbt_handle: *const c_void, record_type: c_int, index: c_uint,
+    key: *const c_char, value: *mut *mut c_char) -> c_int;
+  pub fn CfdIsFindPsbtRecord(
+    handle: *const c_void, psbt_handle: *const c_void, record_type: c_int, index: c_uint,
+    key: *const c_char) -> c_int;
+  pub fn CfdVerifyPsbtTxIn(
+    handle: *const c_void, psbt_handle: *const c_void, txid: *const c_char, vout: c_uint) -> c_int;
+  pub fn CfdInitializeFundPsbt(handle: *const c_void, fund_handle: *mut *mut c_void) -> c_int;
+  pub fn CfdFundPsbtAddToUtxoList(
+    handle: *const c_void, fund_handle: *const c_void, txid: *const c_char, vout: c_uint,
+    amount: c_longlong, asset: *const c_char, descriptor: *const c_char,
+    scriptsig_template: *const c_char, full_utxo_tx: *const c_char) -> c_int;
+  pub fn CfdSetOptionFundPsbt(
+    handle: *const c_void, fund_handle: *const c_void, key: c_int, int64_value: c_longlong,
+    double_value: c_double, bool_value: bool) -> c_int;
+  pub fn CfdFinalizeFundPsbt(
+    handle: *const c_void, psbt_handle: *const c_void, fund_handle: *const c_void,
+    change_address_descriptor: *const c_char, tx_fee: *mut c_longlong,
+    used_utxo_count: *mut c_uint) -> c_int;
+  pub fn CfdGetFundPsbtUsedUtxo(
+    handle: *const c_void, fund_handle: *const c_void, index: c_uint, utxo_index: *mut c_uint,
+    txid: *mut *mut c_char, vout: *mut c_uint, amount: *mut c_longlong, asset: *mut *mut c_char,
+    descriptor: *mut *mut c_char, scriptsig_template: *mut *mut c_char) -> c_int;
+  pub fn CfdFreeFundPsbt(handle: *const c_void, fund_handle: *const c_void) -> c_int;
 }
