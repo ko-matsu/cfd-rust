@@ -580,6 +580,19 @@ fns! {
     direct_locking_script: *const i8,
     asset_string: *const i8,
   ) -> c_int;
+  pub fn CfdClearWitnessStack(
+    handle: *const c_void,
+    create_handle: *const c_void,
+    txid: *const i8,
+    vout: c_uint,
+  ) -> c_int;
+  pub fn CfdUpdateTxInScriptSig(
+    handle: *const c_void,
+    create_handle: *const c_void,
+    txid: *const i8,
+    vout: c_uint,
+    script_sig: *const i8,
+  ) -> c_int;
   pub fn CfdFinalizeTransaction(
     handle: *const c_void,
     create_handle: *const c_void,
@@ -1162,6 +1175,9 @@ fns! {
     sequence: c_uint, amount: c_longlong, locking_script: *const c_char,
     redeem_script: *const c_char, descriptor: *const c_char,
     full_tx_hex: *const c_char) -> c_int;
+  pub fn CfdSetPsbtTxInUtxo(
+    handle: *const c_void, psbt_handle: *const c_void, txid: *const c_char, vout: c_uint,
+    amount: c_longlong, locking_script: *const c_char, full_tx_hex: *const c_char) -> c_int;
   pub fn CfdSetPsbtTxInBip32Pubkey(
     handle: *const c_void, psbt_handle: *const c_void, txid: *const c_char, vout: c_uint,
     pubkey: *const c_char, fingerprint: *const c_char, bip32_path: *const c_char) -> c_int;
@@ -1219,9 +1235,18 @@ fns! {
     handle: *const c_void, pubkey_list_handle: *const c_void, index: c_uint, pubkey: *mut *mut c_char,
     fingerprint: *mut *mut c_char, bip32_path: *mut *mut c_char) -> c_int;
   pub fn CfdFreePsbtPubkeyList(handle: *const c_void, pubkey_list_handle: *const c_void) -> c_int;
+  pub fn CfdGetPsbtByteDataList(
+    handle: *const c_void, psbt_handle: *const c_void, record_kind: c_int, index: c_uint,
+    list_num: *mut c_uint, data_list_handle: *mut *mut c_void) -> c_int;
+  pub fn CfdGetPsbtByteDataItem(
+    handle: *const c_void, data_list_handle: *const c_void, index: c_uint, data: *mut *mut c_char) -> c_int;
+  pub fn CfdFreePsbtByteDataList(handle: *const c_void, data_list_handle: *const c_void) -> c_int;
   pub fn CfdAddPsbtGlobalXpubkey(
     handle: *const c_void, psbt_handle: *const c_void, xpubkey: *const c_char,
     fingerprint: *const c_char, bip32_path: *const c_char) -> c_int;
+  pub fn CfdSetPsbtRedeemScript(
+    handle: *const c_void, psbt_handle: *const c_void, record_type: c_int, index: c_uint,
+    redeem_script: *const c_char) -> c_int;
   pub fn CfdAddPsbtRecord(
     handle: *const c_void, psbt_handle: *const c_void, record_type: c_int, index: c_uint,
     key: *const c_char, value: *const c_char) -> c_int;
