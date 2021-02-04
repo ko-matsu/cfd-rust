@@ -38,6 +38,8 @@ pub enum CfdError {
   DiskAccess(String),
   /// Sign verification error.
   SignVerification(String),
+  /// Not found error.
+  NotFound(String),
 }
 
 impl fmt::Display for CfdError {
@@ -53,6 +55,7 @@ impl fmt::Display for CfdError {
       CfdError::Connection(ref a) => write!(f, "[Connection]: {}", a),
       CfdError::DiskAccess(ref a) => write!(f, "[DiskAccess]: {}", a),
       CfdError::SignVerification(ref a) => write!(f, "[SignVerification]: {}", a),
+      CfdError::NotFound(ref a) => write!(f, "[NotFound]: {}", a),
     }
   }
 }
@@ -70,6 +73,7 @@ impl error::Error for CfdError {
       CfdError::Connection(..) => "connection error",
       CfdError::DiskAccess(..) => "disk access error",
       CfdError::SignVerification(..) => "sign verification error",
+      CfdError::NotFound(..) => "Not found error",
     }
   }
 }
@@ -638,6 +642,7 @@ impl ErrorHandle {
       5 => CfdError::Connection(err_msg),
       6 => CfdError::DiskAccess(err_msg),
       7 => CfdError::SignVerification(err_msg),
+      8 => CfdError::NotFound(err_msg),
       _ => CfdError::Unknown(err_msg),
     }
   }
