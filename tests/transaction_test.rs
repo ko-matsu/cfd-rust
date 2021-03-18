@@ -601,8 +601,8 @@ mod tests {
     let fee_data = tx
       .estimate_fee(&[utxos[1].clone(), utxos[2].clone()], 10.0)
       .expect("Fail");
-    assert_eq!(720, fee_data.txout_fee);
-    assert_eq!(1800, fee_data.utxo_fee);
+    assert_eq!(740, fee_data.txout_fee);
+    assert_eq!(1830, fee_data.utxo_fee);
   }
 
   #[test]
@@ -645,10 +645,10 @@ mod tests {
       .fund_raw_transaction(&[], &utxos, &target_data, &fee_option, &mut fund_data)
       .expect("Fail");
 
-    assert_eq!("02000000010af4768e14f820cb9063f55833b5999119e53390ecf4bf181842909b11d0974d0000000000ffffffff0380969800000000001600144352a1a6e86311f22274f7ebb2746de21b09b15d00093d00000000001600148beaaac4654cf4ebd8e46ca5062b0e7fb3e7470ce47f19000000000016001478eb9fc2c9e1cdf633ecb646858ba862b21384ab00000000",
+    assert_eq!("02000000010af4768e14f820cb9063f55833b5999119e53390ecf4bf181842909b11d0974d0000000000ffffffff0380969800000000001600144352a1a6e86311f22274f7ebb2746de21b09b15d00093d00000000001600148beaaac4654cf4ebd8e46ca5062b0e7fb3e7470c947f19000000000016001478eb9fc2c9e1cdf633ecb646858ba862b21384ab00000000",
     fund_tx.to_str());
     assert_eq!(addr1.to_str(), fund_data.reserved_address_list[0].to_str());
-    assert_eq!(3860, fund_data.fee_amount);
+    assert_eq!(3940, fund_data.fee_amount);
   }
 
   #[test]
@@ -707,18 +707,18 @@ mod tests {
       )
       .expect("Fail");
 
-    assert_eq!("02000000030a9a33750a810cd384ca5d93b09513f1eb5d93c669091b29eef710d2391ff7300000000000ffffffff0a9bf51e0ac499391efd9426e2c909901edd74a97d2378b49c8832c491ad1e9e0000000000ffffffff0a503dbd4f8f2b064c70e048b21f93fe4584174478abf5f44747932cd21da87c0000000000ffffffff0300e1f505000000001600144352a1a6e86311f22274f7ebb2746de21b09b15d00e1f505000000001600148beaaac4654cf4ebd8e46ca5062b0e7fb3e7470c0831b8040000000016001478eb9fc2c9e1cdf633ecb646858ba862b21384ab00000000",
+    assert_eq!("02000000030a9a33750a810cd384ca5d93b09513f1eb5d93c669091b29eef710d2391ff7300000000000ffffffff0a9bf51e0ac499391efd9426e2c909901edd74a97d2378b49c8832c491ad1e9e0000000000ffffffff0a503dbd4f8f2b064c70e048b21f93fe4584174478abf5f44747932cd21da87c0000000000ffffffff0300e1f505000000001600144352a1a6e86311f22274f7ebb2746de21b09b15d00e1f505000000001600148beaaac4654cf4ebd8e46ca5062b0e7fb3e7470c9030b8040000000016001478eb9fc2c9e1cdf633ecb646858ba862b21384ab00000000",
     fund_tx.to_str());
     assert_eq!(addr1.to_str(), fund_data.reserved_address_list[0].to_str());
-    assert_eq!(7460, fund_data.fee_amount);
+    assert_eq!(7580, fund_data.fee_amount);
 
     let fee_utxos = [utxos[1].clone(), utxos[2].clone(), utxos[0].clone()];
     let fee_data = fund_tx
       .estimate_fee(&fee_utxos, fee_option.fee_rate)
       .expect("Fail");
-    assert_eq!(7460, fee_data.txout_fee + fee_data.utxo_fee);
-    assert_eq!(2060, fee_data.txout_fee);
-    assert_eq!(5400, fee_data.utxo_fee);
+    assert_eq!(7580, fee_data.txout_fee + fee_data.utxo_fee);
+    assert_eq!(2100, fee_data.txout_fee);
+    assert_eq!(5480, fee_data.utxo_fee);
   }
 
   #[test]
@@ -761,10 +761,10 @@ mod tests {
       .fund_raw_transaction(&[], &utxos, &target_data, &fee_option, &mut fund_data)
       .expect("Fail");
 
-    assert_eq!("02000000010af4768e14f820cb9063f55833b5999119e53390ecf4bf181842909b11d0974d0000000000ffffffff0380969800000000001600144352a1a6e86311f22274f7ebb2746de21b09b15d00093d00000000001600148beaaac4654cf4ebd8e46ca5062b0e7fb3e7470ce47f19000000000016001478eb9fc2c9e1cdf633ecb646858ba862b21384ab00000000",
+    assert_eq!("02000000010af4768e14f820cb9063f55833b5999119e53390ecf4bf181842909b11d0974d0000000000ffffffff0380969800000000001600144352a1a6e86311f22274f7ebb2746de21b09b15d00093d00000000001600148beaaac4654cf4ebd8e46ca5062b0e7fb3e7470c947f19000000000016001478eb9fc2c9e1cdf633ecb646858ba862b21384ab00000000",
     fund_tx.to_str());
     assert_eq!(addr1.to_str(), fund_data.reserved_address_list[0].to_str());
-    assert_eq!(3860, fund_data.fee_amount);
+    assert_eq!(3940, fund_data.fee_amount);
   }
 
   fn get_bitcoin_bnb_utxo_list(network: &Network) -> Vec<UtxoData> {
@@ -920,7 +920,7 @@ mod tests {
     let selected_list =
       Transaction::select_coins(&utxos, 1500, 39059180, &fee_param).expect("Fail");
     assert_eq!(1, selected_list.select_utxo_list.len());
-    assert_eq!(1360, selected_list.utxo_fee_amount);
+    assert_eq!(1380, selected_list.utxo_fee_amount);
     assert_eq!(39062500, selected_list.get_total_amount());
     assert_eq!(39062500, selected_list.select_utxo_list[0].amount);
   }
@@ -934,7 +934,7 @@ mod tests {
     let selected_list =
       Transaction::select_coins(&utxos, 1500, 119154360, &fee_param).expect("Fail");
     assert_eq!(1, selected_list.select_utxo_list.len());
-    assert_eq!(1360, selected_list.utxo_fee_amount);
+    assert_eq!(1380, selected_list.utxo_fee_amount);
     assert_eq!(156250000, selected_list.get_total_amount());
     assert_eq!(156250000, selected_list.select_utxo_list[0].amount);
   }
@@ -948,7 +948,7 @@ mod tests {
     let selected_list =
       Transaction::select_coins(&utxos, 1500, 120000000, &fee_param).expect("Fail");
     assert_eq!(1, selected_list.select_utxo_list.len());
-    assert_eq!(1360, selected_list.utxo_fee_amount);
+    assert_eq!(1380, selected_list.utxo_fee_amount);
     assert_eq!(156250000, selected_list.get_total_amount());
     assert_eq!(156250000, selected_list.select_utxo_list[0].amount);
   }
@@ -962,7 +962,7 @@ mod tests {
     let selected_list =
       Transaction::select_coins(&utxos, 1500, 220000000, &fee_param).expect("Fail");
     assert_eq!(2, selected_list.select_utxo_list.len());
-    assert_eq!(2720, selected_list.utxo_fee_amount);
+    assert_eq!(2760, selected_list.utxo_fee_amount);
     assert_eq!(234375000, selected_list.get_total_amount());
     assert_eq!(156250000, selected_list.select_utxo_list[0].amount);
     assert_eq!(78125000, selected_list.select_utxo_list[1].amount);
@@ -977,7 +977,7 @@ mod tests {
     let selected_list =
       Transaction::select_coins(&utxos, 1500, 460000000, &fee_param).expect("Fail");
     assert_eq!(2, selected_list.select_utxo_list.len());
-    assert_eq!(2720, selected_list.utxo_fee_amount);
+    assert_eq!(2760, selected_list.utxo_fee_amount);
     assert_eq!(468750000, selected_list.get_total_amount());
     assert_eq!(312500000, selected_list.select_utxo_list[0].amount);
     assert_eq!(156250000, selected_list.select_utxo_list[1].amount);
@@ -992,7 +992,7 @@ mod tests {
     let selected_list =
       Transaction::select_coins(&utxos, 1500, 468700000, &fee_param).expect("Fail");
     assert_eq!(1, selected_list.select_utxo_list.len());
-    assert_eq!(1360, selected_list.utxo_fee_amount);
+    assert_eq!(1380, selected_list.utxo_fee_amount);
     assert_eq!(1250000000, selected_list.get_total_amount());
     assert_eq!(1250000000, selected_list.select_utxo_list[0].amount);
   }
@@ -1007,7 +1007,7 @@ mod tests {
     let selected_list =
       Transaction::select_coins(&utxos, 1500, 468700000, &fee_param).expect("Fail");
     assert_eq!(2, selected_list.select_utxo_list.len());
-    assert_eq!(2720, selected_list.utxo_fee_amount);
+    assert_eq!(2760, selected_list.utxo_fee_amount);
     assert_eq!(468750000, selected_list.get_total_amount());
     assert_eq!(312500000, selected_list.select_utxo_list[0].amount);
     assert_eq!(156250000, selected_list.select_utxo_list[1].amount);
@@ -1022,7 +1022,7 @@ mod tests {
     let selected_list =
       Transaction::select_coins(&utxos, 1500, 99998500, &fee_param).expect("Fail");
     assert_eq!(2, selected_list.select_utxo_list.len());
-    assert_eq!(360, selected_list.utxo_fee_amount);
+    assert_eq!(368, selected_list.utxo_fee_amount);
     assert_eq!(100001090, selected_list.get_total_amount());
     assert_eq!(85062500, selected_list.select_utxo_list[0].amount);
     assert_eq!(14938590, selected_list.select_utxo_list[1].amount);
@@ -1037,7 +1037,7 @@ mod tests {
     let selected_list =
       Transaction::select_coins(&utxos, 1500, 155060800, &fee_param).expect("Fail");
     assert_eq!(1, selected_list.select_utxo_list.len());
-    assert_eq!(180, selected_list.utxo_fee_amount);
+    assert_eq!(184, selected_list.utxo_fee_amount);
     assert_eq!(155062500, selected_list.get_total_amount());
     assert_eq!(155062500, selected_list.select_utxo_list[0].amount);
   }
@@ -1051,7 +1051,7 @@ mod tests {
     let selected_list =
       Transaction::select_coins(&utxos, 1500, 114040000, &fee_param).expect("Fail");
     assert_eq!(3, selected_list.select_utxo_list.len());
-    assert_eq!(270, selected_list.utxo_fee_amount);
+    assert_eq!(276, selected_list.utxo_fee_amount);
     assert_eq!(115063590, selected_list.get_total_amount());
     assert_eq!(61062500, selected_list.select_utxo_list[0].amount);
     assert_eq!(39062500, selected_list.select_utxo_list[1].amount);
