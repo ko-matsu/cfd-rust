@@ -10,7 +10,7 @@ use crate::common::{
 use crate::transaction::{
   set_fund_tx_option, FeeData, FeeOption, FundOptionValue, FundTargetOption, FundTransactionData,
   HashTypeData, OutPoint, ScriptWitness, SigHashOption, TransactionOperation, TxData, TxDataHandle,
-  TxInData, Txid, UtxoData, SEQUENCE_LOCK_TIME_DISABLE,
+  TxInData, Txid, UtxoData, SEQUENCE_LOCK_TIME_FINAL,
 };
 use crate::{
   address::{Address, HashType},
@@ -1499,7 +1499,7 @@ impl Default for ConfidentialTxIn {
   fn default() -> ConfidentialTxIn {
     ConfidentialTxIn {
       outpoint: OutPoint::default(),
-      sequence: SEQUENCE_LOCK_TIME_DISABLE,
+      sequence: SEQUENCE_LOCK_TIME_FINAL,
       script_sig: Script::default(),
       issuance: Issuance::default(),
       script_witness: ScriptWitness::default(),

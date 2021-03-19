@@ -42,7 +42,10 @@ use self::cfd_sys::{
 // const OPT_LONG_TERM_FEE_RATE: i32 = 3;
 // const OPT_KNAPSACK_MIN_CHANGE: i32 = 4;
 
-/// disable locktime
+/// locktime final
+pub const SEQUENCE_LOCK_TIME_FINAL: u32 = 0xffffffff;
+/// disable locktime (deprecated)
+#[deprecated(since = "0.3.0", note = "Please use the SEQUENCE_LOCK_TIME_FINAL")]
 pub const SEQUENCE_LOCK_TIME_DISABLE: u32 = 0xffffffff;
 /// enable locktime (maximum time)
 pub const SEQUENCE_LOCK_TIME_ENABLE_MAX: u32 = 0xfffffffe;
@@ -299,6 +302,72 @@ impl UtxoData {
       descriptor: descriptor.clone(),
       scriptsig_template: Script::default(),
     }
+  }
+
+  /// Create from address.
+  ///
+  /// # Arguments
+  /// * `outpoint` - A txid string.
+  /// * `amount` - A satoshi amount.
+  /// * `address` - An address.
+  ///
+  /// # Example
+  ///
+  /// ```
+  /// use cfd_rust::{Network, OutPoint, UtxoData, Address, Pubkey};
+  /// use std::str::FromStr;
+  /// let outpoint = OutPoint::from_str(
+  ///   "0202020202020202020202020202020202020202020202020202020202020202",
+  ///   1).expect("Fail");
+  /// let amount: i64 = 50000;
+  /// let pubkey = Pubkey::from_str(&"02c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5").expect("Fail");
+  /// let address = Address::p2pkh(&pubkey, &Network::Testnet).expect("Fail");
+  /// let utxo = UtxoData::from_address(&outpoint, amount, &address);
+  /// ```
+  pub fn from_address(
+    outpoint: &OutPoint,
+    amount: i64,
+    address: &Address,
+  ) -> Result<UtxoData, CfdError> {
+    Ok(UtxoData {
+      outpoint: outpoint.clone(),
+      amount,
+      descriptor: Descriptor::address(address)?,
+      scriptsig_template: Script::default(),
+    })
+  }
+
+  /// Create from locking script.
+  ///
+  /// # Arguments
+  /// * `outpoint` - A txid string.
+  /// * `amount` - A satoshi amount.
+  /// * `locking_script` - A locking script.
+  ///
+  /// # Example
+  ///
+  /// ```
+  /// use cfd_rust::{Network, OutPoint, UtxoData, Script};
+  /// use std::str::FromStr;
+  /// let outpoint = OutPoint::from_str(
+  ///   "0202020202020202020202020202020202020202020202020202020202020202",
+  ///   1).expect("Fail");
+  /// let amount: i64 = 50000;
+  /// let script = Script::from_hex("5120c6047f9441ed7d6d3045406e95c07cd85c778e4b8cef3ca7abac09b95c709ee5").expect("Fail");
+  /// let utxo = UtxoData::from_locking_script(&outpoint, amount, &script, &Network::Testnet);
+  /// ```
+  pub fn from_locking_script(
+    outpoint: &OutPoint,
+    amount: i64,
+    locking_script: &Script,
+    network: &Network,
+  ) -> Result<UtxoData, CfdError> {
+    Ok(UtxoData {
+      outpoint: outpoint.clone(),
+      amount,
+      descriptor: Descriptor::raw_script(locking_script, network)?,
+      scriptsig_template: Script::default(),
+    })
   }
 
   /// Create object.
@@ -587,7 +656,7 @@ impl TxInData {
   pub fn new(outpoint: &OutPoint) -> TxInData {
     TxInData {
       outpoint: outpoint.clone(),
-      sequence: SEQUENCE_LOCK_TIME_DISABLE,
+      sequence: SEQUENCE_LOCK_TIME_FINAL,
       script_sig: Script::default(),
     }
   }
@@ -595,7 +664,7 @@ impl TxInData {
   pub fn from_utxo(utxo: &UtxoData) -> TxInData {
     TxInData {
       outpoint: utxo.outpoint.clone(),
-      sequence: SEQUENCE_LOCK_TIME_DISABLE,
+      sequence: SEQUENCE_LOCK_TIME_FINAL,
       script_sig: Script::default(),
     }
   }
@@ -650,7 +719,7 @@ impl Default for TxIn {
   fn default() -> TxIn {
     TxIn {
       outpoint: OutPoint::default(),
-      sequence: SEQUENCE_LOCK_TIME_DISABLE,
+      sequence: SEQUENCE_LOCK_TIME_FINAL,
       script_sig: Script::default(),
       script_witness: ScriptWitness::default(),
     }

@@ -97,5 +97,5 @@ pub use transaction::TxOut;
 pub use transaction::TxOutData;
 pub use transaction::Txid;
 pub use transaction::UtxoData;
-pub use transaction::SEQUENCE_LOCK_TIME_DISABLE;
 pub use transaction::SEQUENCE_LOCK_TIME_ENABLE_MAX;
+pub use transaction::SEQUENCE_LOCK_TIME_FINAL;

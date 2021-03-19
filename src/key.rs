@@ -1017,6 +1017,8 @@ impl Default for KeyPair {
 /// An enumeration definition of signature hash type.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum SigHashType {
+  /// SigHashType::Default
+  Default,
   /// SigHashType::All
   All,
   /// SigHashType::None
@@ -1053,12 +1055,14 @@ impl SigHashType {
         SigHashType::Single | SigHashType::SinglePlusAnyoneCanPay => {
           SigHashType::SinglePlusAnyoneCanPay
         }
+        SigHashType::Default => SigHashType::Default,
       }
     } else {
       match sighash_type {
         SigHashType::All | SigHashType::AllPlusAnyoneCanPay => SigHashType::All,
         SigHashType::None | SigHashType::NonePlusAnyoneCanPay => SigHashType::None,
         SigHashType::Single | SigHashType::SinglePlusAnyoneCanPay => SigHashType::Single,
+        SigHashType::Default => SigHashType::Default,
       }
     }
   }
@@ -1078,12 +1082,13 @@ impl SigHashType {
       SigHashType::AllPlusAnyoneCanPay
       | SigHashType::NonePlusAnyoneCanPay
       | SigHashType::SinglePlusAnyoneCanPay => true,
-      SigHashType::All | SigHashType::None | SigHashType::Single => false,
+      SigHashType::All | SigHashType::None | SigHashType::Single | SigHashType::Default => false,
     }
   }
 
   pub(in crate) fn from_c_value(sighash_type: c_int) -> SigHashType {
     match sighash_type {
+      0 => SigHashType::Default,
       1 => SigHashType::All,
       2 => SigHashType::None,
       3 => SigHashType::Single,
@@ -1093,6 +1098,7 @@ impl SigHashType {
 
   pub(in crate) fn to_c_value(&self) -> c_int {
     match self {
+      SigHashType::Default => 0,
       SigHashType::All | SigHashType::AllPlusAnyoneCanPay => 1,
       SigHashType::None | SigHashType::NonePlusAnyoneCanPay => 2,
       SigHashType::Single | SigHashType::SinglePlusAnyoneCanPay => 3,
@@ -1103,6 +1109,7 @@ impl SigHashType {
 impl fmt::Display for SigHashType {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     let _ = match *self {
+      SigHashType::Default => write!(f, "sighashType:Default"),
       SigHashType::All | SigHashType::AllPlusAnyoneCanPay => write!(f, "sighashType:All"),
       SigHashType::None | SigHashType::NonePlusAnyoneCanPay => write!(f, "sighashType:None"),
       SigHashType::Single | SigHashType::SinglePlusAnyoneCanPay => write!(f, "sighashType:Single"),
