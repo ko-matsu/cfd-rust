@@ -668,10 +668,8 @@ impl Address {
   pub fn valid(&self) -> bool {
     if self.address.is_empty() {
       false
-    } else if let Ok(_result) = Address::from_string(&self.address) {
-      true
     } else {
-      false
+      matches!(Address::from_string(&self.address), Ok(_result))
     }
   }
 

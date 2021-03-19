@@ -523,8 +523,9 @@ impl FromStr for ReverseContainer {
     } else {
       let byte_data = ByteData::from_slice_reverse(&bytes);
       let reverse_bytes = byte_data.to_slice();
-      let mut data = ReverseContainer::default();
-      data.data = copy_array_32byte(&reverse_bytes);
+      let data = ReverseContainer {
+        data: copy_array_32byte(&reverse_bytes),
+      };
       Ok(data)
     }
   }

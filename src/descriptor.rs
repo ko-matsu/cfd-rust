@@ -224,20 +224,22 @@ pub struct DescriptorScriptData {
 
 impl DescriptorScriptData {
   pub fn from_raw_script(depth: u32, redeem_script: &Script) -> DescriptorScriptData {
-    let mut obj = DescriptorScriptData::default();
-    obj.script_type = DescriptorScriptType::Raw;
-    obj.depth = depth;
-    obj.redeem_script = redeem_script.clone();
-    obj
+    DescriptorScriptData {
+      script_type: DescriptorScriptType::Raw,
+      depth,
+      redeem_script: redeem_script.clone(),
+      ..DescriptorScriptData::default()
+    }
   }
 
   pub fn from_address(depth: u32, hash_type: &HashType, address: &Address) -> DescriptorScriptData {
-    let mut obj = DescriptorScriptData::default();
-    obj.script_type = DescriptorScriptType::Addr;
-    obj.depth = depth;
-    obj.hash_type = *hash_type;
-    obj.address = address.clone();
-    obj
+    DescriptorScriptData {
+      script_type: DescriptorScriptType::Addr,
+      depth,
+      hash_type: *hash_type,
+      address: address.clone(),
+      ..DescriptorScriptData::default()
+    }
   }
 
   pub fn from_pubkey(
@@ -247,13 +249,14 @@ impl DescriptorScriptData {
     address: Address,
     key_data: KeyData,
   ) -> DescriptorScriptData {
-    let mut obj = DescriptorScriptData::default();
-    obj.script_type = script_type;
-    obj.depth = depth;
-    obj.hash_type = hash_type;
-    obj.address = address;
-    obj.key_data = key_data;
-    obj
+    DescriptorScriptData {
+      script_type,
+      depth,
+      hash_type,
+      address,
+      key_data,
+      ..DescriptorScriptData::default()
+    }
   }
 
   pub fn from_script(
@@ -263,13 +266,14 @@ impl DescriptorScriptData {
     address: Address,
     script: Script,
   ) -> DescriptorScriptData {
-    let mut obj = DescriptorScriptData::default();
-    obj.script_type = script_type;
-    obj.depth = depth;
-    obj.hash_type = hash_type;
-    obj.address = address;
-    obj.redeem_script = script;
-    obj
+    DescriptorScriptData {
+      script_type,
+      depth,
+      hash_type,
+      address,
+      redeem_script: script,
+      ..DescriptorScriptData::default()
+    }
   }
 
   pub fn from_key_and_script(
@@ -883,10 +887,12 @@ impl Descriptor {
   /// ```
   pub fn has_script_hash(&self) -> bool {
     match self.root_data.script_type {
-      DescriptorScriptType::Sh | DescriptorScriptType::Wsh => match self.root_data.hash_type {
-        HashType::P2sh | HashType::P2wsh | HashType::P2shP2wsh => true,
-        _ => false,
-      },
+      DescriptorScriptType::Sh | DescriptorScriptType::Wsh => {
+        matches!(
+          self.root_data.hash_type,
+          HashType::P2sh | HashType::P2wsh | HashType::P2shP2wsh
+        )
+      }
       _ => false,
     }
   }
@@ -917,10 +923,12 @@ impl Descriptor {
       DescriptorScriptType::Sh
       | DescriptorScriptType::Pkh
       | DescriptorScriptType::Wpkh
-      | DescriptorScriptType::Combo => match self.root_data.hash_type {
-        HashType::P2pkh | HashType::P2wpkh | HashType::P2shP2wpkh => true,
-        _ => false,
-      },
+      | DescriptorScriptType::Combo => {
+        matches!(
+          self.root_data.hash_type,
+          HashType::P2pkh | HashType::P2wpkh | HashType::P2shP2wpkh
+        )
+      }
       _ => false,
     }
   }

@@ -203,15 +203,17 @@ impl ConfidentialAsset {
         )),
       },
       32 => {
-        let mut asset_obj = ConfidentialAsset::default();
-        asset_obj.data = get_commitment_from_byte(data, 32).to_vec();
+        let asset_obj = ConfidentialAsset {
+          data: get_commitment_from_byte(data, 32).to_vec(),
+        };
         Ok(asset_obj)
       }
       33 => match data[0] {
         0 => Ok(ConfidentialAsset::default()),
         1 | 10 | 11 => {
-          let mut asset_obj = ConfidentialAsset::default();
-          asset_obj.data = get_commitment_from_byte(data, 32).to_vec();
+          let asset_obj = ConfidentialAsset {
+            data: get_commitment_from_byte(data, 32).to_vec(),
+          };
           Ok(asset_obj)
         }
         _ => Err(CfdError::IllegalArgument(
@@ -236,17 +238,11 @@ impl ConfidentialAsset {
   }
 
   pub fn is_blind(&self) -> bool {
-    match self.data[0] {
-      10 | 11 => true,
-      _ => false,
-    }
+    matches!(self.data[0], 10 | 11)
   }
 
   pub fn is_empty(&self) -> bool {
-    match self.data[0] {
-      0 => true,
-      _ => false,
-    }
+    matches!(self.data[0], 0)
   }
 
   pub fn as_bytes(&self) -> Vec<u8> {
@@ -377,15 +373,17 @@ impl ConfidentialNonce {
         )),
       },
       32 => {
-        let mut nonce_obj = ConfidentialNonce::default();
-        nonce_obj.data = get_commitment_from_byte(data, 32).to_vec();
+        let nonce_obj = ConfidentialNonce {
+          data: get_commitment_from_byte(data, 32).to_vec(),
+        };
         Ok(nonce_obj)
       }
       33 => match data[0] {
         0 => Ok(ConfidentialNonce::default()),
         1 | 2 | 3 => {
-          let mut nonce_obj = ConfidentialNonce::default();
-          nonce_obj.data = get_commitment_from_byte(data, 32).to_vec();
+          let nonce_obj = ConfidentialNonce {
+            data: get_commitment_from_byte(data, 32).to_vec(),
+          };
           Ok(nonce_obj)
         }
         _ => Err(CfdError::IllegalArgument(
@@ -427,17 +425,11 @@ impl ConfidentialNonce {
   }
 
   pub fn is_blind(&self) -> bool {
-    match self.data[0] {
-      2 | 3 => true,
-      _ => false,
-    }
+    matches!(self.data[0], 2 | 3)
   }
 
   pub fn is_empty(&self) -> bool {
-    match self.data[0] {
-      0 => true,
-      _ => false,
-    }
+    matches!(self.data[0], 0)
   }
 
   pub fn as_bytes(&self) -> Vec<u8> {
@@ -507,9 +499,10 @@ impl ConfidentialValue {
         )),
       },
       8 => {
-        let mut value_obj = ConfidentialValue::default();
-        value_obj.data = get_commitment_from_byte(data, 8).to_vec();
-        value_obj.amount = ConfidentialValue::get_amount(data);
+        let value_obj = ConfidentialValue {
+          data: get_commitment_from_byte(data, 8).to_vec(),
+          amount: ConfidentialValue::get_amount(data),
+        };
         Ok(value_obj)
       }
       9 | 33 => match data[0] {
@@ -520,8 +513,10 @@ impl ConfidentialValue {
               "Invalid value version format.".to_string(),
             ))
           } else {
-            let mut value_obj = ConfidentialValue::default();
-            value_obj.data = get_commitment_from_byte(data, 8).to_vec();
+            let mut value_obj = ConfidentialValue {
+              data: get_commitment_from_byte(data, 8).to_vec(),
+              ..ConfidentialValue::default()
+            };
             if data[0] == 1 {
               let unblind_data = get_byte_from_commitment(&value_obj.data, 8);
               value_obj.amount = ConfidentialValue::get_amount(&unblind_data);
@@ -575,9 +570,10 @@ impl ConfidentialValue {
       handle.free_handle();
       result
     }?;
-    let mut value_obj = ConfidentialValue::default();
-    value_obj.data = get_commitment_from_byte(&data, 8).to_vec();
-    value_obj.amount = amount;
+    let value_obj = ConfidentialValue {
+      data: get_commitment_from_byte(&data, 8).to_vec(),
+      amount,
+    };
     Ok(value_obj)
   }
 
@@ -590,17 +586,11 @@ impl ConfidentialValue {
   }
 
   pub fn is_blind(&self) -> bool {
-    match self.data[0] {
-      8 | 9 => true,
-      _ => false,
-    }
+    matches!(self.data[0], 8 | 9)
   }
 
   pub fn is_empty(&self) -> bool {
-    match self.data[0] {
-      0 => true,
-      _ => false,
-    }
+    matches!(self.data[0], 0)
   }
 
   pub fn as_bytes(&self) -> Vec<u8> {
@@ -1212,11 +1202,12 @@ impl ConfidentialTxOutData {
     asset: &ConfidentialAsset,
     address: &Address,
   ) -> ConfidentialTxOutData {
-    let mut data = ConfidentialTxOutData::default();
-    data.amount = amount;
-    data.address = address.clone();
-    data.asset = asset.clone();
-    data
+    ConfidentialTxOutData {
+      amount,
+      address: address.clone(),
+      asset: asset.clone(),
+      ..ConfidentialTxOutData::default()
+    }
   }
 
   pub fn from_confidential_address(
@@ -1224,12 +1215,13 @@ impl ConfidentialTxOutData {
     asset: &ConfidentialAsset,
     confidential_address: &ConfidentialAddress,
   ) -> ConfidentialTxOutData {
-    let mut data = ConfidentialTxOutData::default();
-    data.amount = amount;
-    data.address = confidential_address.get_address().clone();
-    data.confidential_address = confidential_address.clone();
-    data.asset = asset.clone();
-    data
+    ConfidentialTxOutData {
+      amount,
+      address: confidential_address.get_address().clone(),
+      confidential_address: confidential_address.clone(),
+      asset: asset.clone(),
+      ..ConfidentialTxOutData::default()
+    }
   }
 
   pub fn from_locking_script(
@@ -1238,29 +1230,33 @@ impl ConfidentialTxOutData {
     locking_script: &Script,
     nonce: &ConfidentialNonce,
   ) -> ConfidentialTxOutData {
-    let mut data = ConfidentialTxOutData::default();
-    data.amount = amount;
-    data.locking_script = locking_script.clone();
-    data.nonce = nonce.clone();
-    data.asset = asset.clone();
-    data
+    ConfidentialTxOutData {
+      amount,
+      locking_script: locking_script.clone(),
+      nonce: nonce.clone(),
+      asset: asset.clone(),
+      ..ConfidentialTxOutData::default()
+    }
   }
 
   pub fn from_fee(amount: i64, asset: &ConfidentialAsset) -> ConfidentialTxOutData {
-    let mut data = ConfidentialTxOutData::default();
-    data.amount = amount;
-    data.asset = asset.clone();
-    data
+    ConfidentialTxOutData {
+      amount,
+      asset: asset.clone(),
+      ..ConfidentialTxOutData::default()
+    }
   }
 
   pub fn from_destroy_amount(
     amount: i64,
     asset: &ConfidentialAsset,
   ) -> Result<ConfidentialTxOutData, CfdError> {
-    let mut data = ConfidentialTxOutData::default();
-    data.amount = amount;
-    data.asset = asset.clone();
-    data.locking_script = Script::from_slice(&[0x6a])?;
+    let data = ConfidentialTxOutData {
+      amount,
+      asset: asset.clone(),
+      locking_script: Script::from_slice(&[0x6a])?,
+      ..ConfidentialTxOutData::default()
+    };
     Ok(data)
   }
 
@@ -1276,9 +1272,11 @@ impl ConfidentialTxOutData {
     asset: &ConfidentialAsset,
     amount: i64,
   ) -> Result<ConfidentialTxOutData, CfdError> {
-    let mut txout = ConfidentialTxOutData::default();
-    txout.asset = asset.clone();
-    txout.amount = amount;
+    let mut txout = ConfidentialTxOutData {
+      asset: asset.clone(),
+      amount,
+      ..ConfidentialTxOutData::default()
+    };
     let ct_addr_ret = ConfidentialAddress::parse(address);
     if let Ok(ct_addr) = ct_addr_ret {
       txout.confidential_address = ct_addr;
@@ -1531,8 +1529,10 @@ impl ConfidentialTxOut {
       } else {
         &item.locking_script
       };
-      let mut txout = ConfidentialTxOut::default();
-      txout.locking_script = script.clone();
+      let mut txout = ConfidentialTxOut {
+        locking_script: script.clone(),
+        ..ConfidentialTxOut::default()
+      };
       if let Ok(value) = ConfidentialValue::from_amount(item.amount) {
         txout.value = value;
       }

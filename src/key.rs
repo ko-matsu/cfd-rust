@@ -938,10 +938,7 @@ impl Pubkey {
   /// ```
   #[inline]
   pub fn valid(&self) -> bool {
-    match self.compress() {
-      Ok(_result) => true,
-      _ => false,
-    }
+    matches!(self.compress(), Ok(_result))
   }
 }
 
