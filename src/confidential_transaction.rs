@@ -1310,9 +1310,27 @@ pub struct ConfidentialTxData {
 
 impl Default for ConfidentialTxData {
   fn default() -> ConfidentialTxData {
+    // default txid: version=2, locktime=0
+    let txid_value =
+      match Txid::from_str("c7e8a6e4ebd4981c43ff919703d54e91b4b3cb2325caf102dfc384bcad455c6f") {
+        Ok(_txid) => _txid,
+        _ => Txid::default(),
+      };
+    let wit_hash =
+      match Txid::from_str("d8a93718eaf9feba4362d2c091d4e58ccabe9f779957336269b4b917be9856da") {
+        Ok(_txid) => _txid,
+        _ => Txid::default(),
+      };
     ConfidentialTxData {
-      tx_data: TxData::default(),
-      wit_hash: Txid::default(),
+      tx_data: TxData {
+        txid: txid_value.clone(),
+        wtxid: txid_value,
+        size: 11,
+        vsize: 11,
+        weight: 44,
+        ..TxData::default()
+      },
+      wit_hash,
     }
   }
 }
@@ -2758,14 +2776,11 @@ impl FromStr for ConfidentialTransaction {
 
 impl Default for ConfidentialTransaction {
   fn default() -> ConfidentialTransaction {
-    match ConfidentialTransaction::new(2, 0) {
-      Ok(tx) => tx,
-      _ => ConfidentialTransaction {
-        tx: [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0].to_vec(),
-        data: ConfidentialTxData::default(),
-        txin_list: vec![],
-        txout_list: vec![],
-      },
+    ConfidentialTransaction {
+      tx: [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0].to_vec(),
+      data: ConfidentialTxData::default(),
+      txin_list: vec![],
+      txout_list: vec![],
     }
   }
 }

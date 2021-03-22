@@ -671,7 +671,7 @@ mod tests {
     // amount = 85062500 + 39062500 = 124125000
     let amount1 = 100000000;
     let amount2 = 100000000;
-    let tx = Transaction::create_tx(
+    let mut tx = Transaction::create_tx(
       2,
       0,
       &[
@@ -698,7 +698,7 @@ mod tests {
     fee_option.dust_fee_rate = -1.0;
     fee_option.knapsack_min_change = -1;
     let mut fund_data = FundTransactionData::default();
-    let fund_tx = tx
+    tx = tx
       .fund_raw_transaction(
         &input_utxos,
         &utxos,
@@ -709,12 +709,12 @@ mod tests {
       .expect("Fail");
 
     assert_eq!("02000000030a9a33750a810cd384ca5d93b09513f1eb5d93c669091b29eef710d2391ff7300000000000ffffffff0a9bf51e0ac499391efd9426e2c909901edd74a97d2378b49c8832c491ad1e9e0000000000ffffffff0a503dbd4f8f2b064c70e048b21f93fe4584174478abf5f44747932cd21da87c0000000000ffffffff0300e1f505000000001600144352a1a6e86311f22274f7ebb2746de21b09b15d00e1f505000000001600148beaaac4654cf4ebd8e46ca5062b0e7fb3e7470c9030b8040000000016001478eb9fc2c9e1cdf633ecb646858ba862b21384ab00000000",
-    fund_tx.to_str());
+    tx.to_str());
     assert_eq!(addr1.to_str(), fund_data.reserved_address_list[0].to_str());
     assert_eq!(7580, fund_data.fee_amount);
 
     let fee_utxos = [utxos[1].clone(), utxos[2].clone(), utxos[0].clone()];
-    let fee_data = fund_tx
+    let fee_data = tx
       .estimate_fee(&fee_utxos, fee_option.fee_rate)
       .expect("Fail");
     assert_eq!(7580, fee_data.txout_fee + fee_data.utxo_fee);

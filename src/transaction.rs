@@ -639,9 +639,15 @@ pub struct TxData {
 
 impl Default for TxData {
   fn default() -> TxData {
+    // default txid: version=2, locktime=0
+    let txid_value =
+      match Txid::from_str("4ebd325a4b394cff8c57e8317ccf5a8d0e2bdf1b8526f8aad6c8e43d8240621a") {
+        Ok(_txid) => _txid,
+        _ => Txid::default(),
+      };
     TxData {
-      txid: Txid::default(),
-      wtxid: Txid::default(),
+      txid: txid_value.clone(),
+      wtxid: txid_value,
       size: 10,
       vsize: 10,
       weight: 40,
@@ -2090,16 +2096,18 @@ impl Transaction {
     fee_param: &FeeOption,
     fund_data: &mut FundTransactionData,
   ) -> Result<Transaction, CfdError> {
-    let mut ope = TransactionOperation::new(&Network::Mainnet);
-    let fund_result = ope.fund_raw_transaction(
-      txin_list,
-      utxo_list,
-      &hex_from_bytes(&self.tx),
-      target_data,
-      fee_param,
-    )?;
-    let tx = ope.get_last_tx();
-    let tx_obj = Transaction::from_str(tx)?;
+    let (fund_result, tx) = {
+      let mut ope = TransactionOperation::new(&Network::Mainnet);
+      let (fund_ret, tx_str) = ope.fund_raw_transaction(
+        txin_list,
+        utxo_list,
+        &hex_from_bytes(&self.tx),
+        target_data,
+        fee_param,
+      )?;
+      Ok((fund_ret, tx_str))
+    }?;
+    let tx_obj = Transaction::from_str(&tx)?;
     *fund_data = fund_result;
     Ok(tx_obj)
   }
@@ -2125,15 +2133,12 @@ impl FromStr for Transaction {
 
 impl Default for Transaction {
   fn default() -> Transaction {
-    match Transaction::new(2, 0) {
-      Ok(tx) => tx,
-      _ => Transaction {
-        tx: [2, 0, 0, 0, 0, 0, 0, 0, 0, 0].to_vec(),
-        data: TxData::default(),
-        txin_list: vec![],
-        txout_list: vec![],
-        txin_utxo_list: vec![],
-      },
+    Transaction {
+      tx: [2, 0, 0, 0, 0, 0, 0, 0, 0, 0].to_vec(),
+      data: TxData::default(),
+      txin_list: vec![],
+      txout_list: vec![],
+      txin_utxo_list: vec![],
     }
   }
 }
@@ -3651,7 +3656,7 @@ impl TransactionOperation {
     tx: &str,
     target_data: &FundTargetOption,
     fee_param: &FeeOption,
-  ) -> Result<FundTransactionData, CfdError> {
+  ) -> Result<(FundTransactionData, String), CfdError> {
     let network = match target_data.reserved_address.valid() {
       true => match target_data.reserved_address.get_network_type() {
         Network::Mainnet | Network::Testnet | Network::Regtest => {
@@ -3805,8 +3810,8 @@ impl TransactionOperation {
             used_addr_list.push(address);
             index += 1;
           }
-          self.last_tx = output_tx;
-          Ok(FundTransactionData::new(used_addr_list, tx_fee))
+          self.last_tx = output_tx.clone();
+          Ok((FundTransactionData::new(used_addr_list, tx_fee), output_tx))
         };
         unsafe {
           CfdFreeFundRawTxHandle(handle.as_handle(), fund_handle);
