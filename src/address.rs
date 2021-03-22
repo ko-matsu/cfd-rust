@@ -3,8 +3,8 @@ extern crate libc;
 
 use self::libc::{c_char, c_int, c_uint, c_void};
 use crate::common::{
-  alloc_c_string, collect_cstring_and_free, collect_multi_cstring_and_free, CfdError, ErrorHandle,
-  Network,
+  alloc_c_string, collect_cstring_and_free, collect_multi_cstring_and_free, ByteData, CfdError,
+  ErrorHandle, Network,
 };
 use crate::{key::Pubkey, schnorr::SchnorrPubkey, script::Script};
 use std::fmt;
@@ -292,6 +292,7 @@ pub struct Address {
   address_type: AddressType,
   p2sh_wrapped_segwit_script: Script,
   witness_version: WitnessVersion,
+  hash: ByteData,
 }
 
 impl Address {
@@ -309,7 +310,7 @@ impl Address {
   /// ```
   pub fn from_string(address: &str) -> Result<Address, CfdError> {
     let addr = alloc_c_string(address)?;
-    let handle = ErrorHandle::new()?;
+    let mut handle = ErrorHandle::new()?;
     let mut network_type_c: c_int = 0;
     let mut hash_type_c: c_int = 0;
     let mut witness_version_c: c_int = 0;
@@ -330,6 +331,7 @@ impl Address {
       0 => {
         let str_list = unsafe { collect_multi_cstring_and_free(&[locking_script, hash]) }?;
         let script_obj = &str_list[0];
+        let hash_obj = ByteData::from_str(&str_list[1])?;
         let script = Script::from_hex(script_obj)?;
         let hash_type = HashType::from_c_value(hash_type_c);
         Ok(Address {
@@ -337,8 +339,9 @@ impl Address {
           locking_script: script,
           network_type: Network::from_c_value(network_type_c),
           address_type: hash_type.to_address_type(),
-          p2sh_wrapped_segwit_script: Script::default(),
           witness_version: hash_type.get_witness_version(),
+          hash: hash_obj,
+          ..Address::default()
         })
       }
       _ => Err(handle.get_error(error_code)),
@@ -365,7 +368,7 @@ impl Address {
   /// ```
   pub fn from_locking_script(script: &Script, network_type: &Network) -> Result<Address, CfdError> {
     let hex = alloc_c_string(&script.to_hex())?;
-    let handle = ErrorHandle::new()?;
+    let mut handle = ErrorHandle::new()?;
     let mut address: *mut c_char = ptr::null_mut();
     let error_code = unsafe {
       CfdGetAddressFromLockingScript(
@@ -646,6 +649,10 @@ impl Address {
     self.witness_version
   }
 
+  pub fn get_hash(&self) -> &ByteData {
+    &self.hash
+  }
+
   /// Get p2wpkh or p2wsh locking script on p2sh-segwit.
   ///
   /// # Example
@@ -745,7 +752,7 @@ impl Address {
     network_type: &Network,
   ) -> Result<Vec<MultisigItem>, CfdError> {
     let redeem_script = alloc_c_string(&multisig_script.to_hex())?;
-    let handle = ErrorHandle::new()?;
+    let mut handle = ErrorHandle::new()?;
     let mut max_key_num: c_uint = 0;
     let mut addr_multisig_keys_handle: *mut c_void = ptr::null_mut();
     let error_code = unsafe {
@@ -834,7 +841,7 @@ impl Address {
         _ => alloc_c_string(""),
       }
     }?;
-    let handle = ErrorHandle::new()?;
+    let mut handle = ErrorHandle::new()?;
     let mut address: *mut c_char = ptr::null_mut();
     let mut locking_script: *mut c_char = ptr::null_mut();
     let mut p2sh_segwit_locking_script: *mut c_char = ptr::null_mut();
@@ -855,19 +862,26 @@ impl Address {
         let str_list = unsafe {
           collect_multi_cstring_and_free(&[address, locking_script, p2sh_segwit_locking_script])
         }?;
-        let addr_obj = &str_list[0];
+        let addr_str = &str_list[0];
         let script_obj = &str_list[1];
         let segwit_obj = &str_list[2];
+        let hash_obj = unsafe {
+          match schnorr_pubkey.as_ref() {
+            Some(schnorr_pubkey) => ByteData::from_str(&schnorr_pubkey.to_hex()),
+            _ => Ok(ByteData::default()),
+          }?
+        };
         let addr_locking_script = Script::from_hex(script_obj)?;
         let segwit_script = Script::from_hex(segwit_obj)?;
         let hash_type_obj = HashType::from_c_value(hash_type);
         Ok(Address {
-          address: addr_obj.clone(),
+          address: addr_str.clone(),
           locking_script: addr_locking_script,
           network_type: Network::from_c_value(network_type),
           address_type: hash_type_obj.to_address_type(),
           p2sh_wrapped_segwit_script: segwit_script,
           witness_version: hash_type_obj.get_witness_version(),
+          hash: hash_obj,
         })
       }
       _ => Err(handle.get_error(error_code)),
@@ -899,6 +913,7 @@ impl Default for Address {
       address_type: AddressType::Unknown,
       p2sh_wrapped_segwit_script: Script::default(),
       witness_version: WitnessVersion::None,
+      hash: ByteData::default(),
     }
   }
 }

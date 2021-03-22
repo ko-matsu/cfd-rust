@@ -660,7 +660,7 @@ impl Descriptor {
   ) -> Result<Descriptor, CfdError> {
     let descriptor_str = alloc_c_string(descriptor)?;
     let bip32_path_str = alloc_c_string(bip32_path)?;
-    let handle = ErrorHandle::new()?;
+    let mut handle = ErrorHandle::new()?;
     let mut max_num: c_uint = 0;
     let mut descriptor_handle: *mut c_void = ptr::null_mut();
     let error_code = unsafe {
@@ -973,7 +973,7 @@ impl Descriptor {
 
   fn append_checksum(descriptor: &str, network_type: &Network) -> Result<String, CfdError> {
     let descriptor_str = alloc_c_string(descriptor)?;
-    let handle = ErrorHandle::new()?;
+    let mut handle = ErrorHandle::new()?;
     let mut desc_added_checksum: *mut c_char = ptr::null_mut();
     let error_code = unsafe {
       CfdGetDescriptorChecksum(

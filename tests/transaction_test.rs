@@ -3,9 +3,10 @@ extern crate cfd_rust;
 #[cfg(test)]
 mod tests {
   use cfd_rust::{
-    Address, Amount, Descriptor, ExtPrivkey, ExtPubkey, FeeOption, FundTargetOption,
-    FundTransactionData, HashType, Network, OutPoint, Pubkey, Script, SigHashType, SignParameter,
-    Transaction, TxInData, TxOutData, UtxoData,
+    Address, Amount, ByteData, Descriptor, ExtPrivkey, ExtPubkey, FeeOption, FundTargetOption,
+    FundTransactionData, HashType, Network, OutPoint, Privkey, Pubkey, SchnorrPubkey, SchnorrUtil,
+    Script, SigHashType, SignParameter, TapBranch, Transaction, TxInData, TxOutData, Txid,
+    UtxoData, CODE_SEPARATOR_POSITION_FINAL,
   };
   use std::str::FromStr;
 
@@ -1089,5 +1090,240 @@ mod tests {
       "[IllegalState]: Failed to select coin. Not enough utxos.",
       err_msg
     );
+  }
+
+  #[test]
+  fn taproot_schnorr_sign_test01() {
+    let privkey =
+      Privkey::from_str("305e293b010d29bf3c888b617763a438fee9054c8cab66eb12ad078f819d9f27")
+        .expect("Fail");
+    let (pubkey, _) = SchnorrPubkey::from_privkey(&privkey).expect("Fail");
+    assert_eq!(
+      "1777701648fa4dd93c74edd9d58cfcc7bdc2fa30a2f6fa908b6fd70c92833cfb",
+      pubkey.to_hex()
+    );
+
+    let addr = Address::taproot(&pubkey, &Network::Testnet).expect("Fail");
+    assert_eq!(
+      "tb1pzamhq9jglfxaj0r5ahvatr8uc77u973s5tm04yytdltsey5r8naskf8ee6",
+      addr.to_str()
+    );
+
+    let tx_hex = "020000000116d975e4c2cea30f72f4f5fe528f5a0727d9ea149892a50c030d44423088ea2f0000000000ffffffff0130f1029500000000160014164e985d0fc92c927a66c0cbaf78e6ea389629d500000000";
+
+    let utxos = [UtxoData::from_locking_script(
+      &OutPoint::new(
+        &Txid::from_str("2fea883042440d030ca5929814ead927075a8f52fef5f4720fa3cec2e475d916")
+          .expect("Fail"),
+        0,
+      ),
+      2499999000,
+      addr.get_locking_script(),
+      &Network::Mainnet,
+    )
+    .expect("Fail")];
+    let outpoint = utxos[0].outpoint.clone();
+
+    let mut tx = Transaction::from_str(tx_hex).expect("Fail");
+    let fee_data = tx.estimate_fee(&utxos, 2.0).expect("Fail");
+    assert_eq!(202, fee_data.get_total_fee());
+
+    tx = tx.append_utxo_list(&utxos).expect("Fail");
+
+    let sighash_type = SigHashType::All;
+    let annex = vec![];
+    let sighash = tx
+      .get_sighash_by_schnorr_pubkey(&outpoint, &pubkey, &sighash_type, &annex)
+      .expect("Fail");
+    let sighash_bytes = ByteData::from_slice(&sighash);
+    assert_eq!(
+      "e5b11ddceab1e4fc49a8132ae589a39b07acf49cabb2b0fbf6104bc31da12c02",
+      sighash_bytes.to_hex()
+    );
+
+    let util = SchnorrUtil::new();
+    let aux_rand = ByteData::default();
+    let signature = util
+      .sign(&sighash_bytes, &privkey, &aux_rand)
+      .expect("Fail");
+    let sig = signature.get_sign_parameter(&sighash_type);
+    assert_eq!("61f75636003a870b7a1685abae84eedf8c9527227ac70183c376f7b3a35b07ebcbea14749e58ce1a87565b035b2f3963baa5ae3ede95e89fd607ab7849f20872", sig.to_hex());
+
+    tx = tx
+      .add_taproot_signature(&outpoint, &sig, &annex)
+      .expect("Fail");
+    assert_eq!("0200000000010116d975e4c2cea30f72f4f5fe528f5a0727d9ea149892a50c030d44423088ea2f0000000000ffffffff0130f1029500000000160014164e985d0fc92c927a66c0cbaf78e6ea389629d5014161f75636003a870b7a1685abae84eedf8c9527227ac70183c376f7b3a35b07ebcbea14749e58ce1a87565b035b2f3963baa5ae3ede95e89fd607ab7849f208720100000000", tx.to_str());
+
+    tx.verify_sign_by_utxo_list(&outpoint).expect("Fail");
+
+    // verify signature
+    let is_verify = util
+      .verify(&signature, &sighash_bytes, &pubkey)
+      .expect("Fail");
+    assert_eq!(true, is_verify);
+  }
+
+  #[test]
+  fn taproot_schnorr_sign_test02() {
+    let privkey =
+      Privkey::from_str("305e293b010d29bf3c888b617763a438fee9054c8cab66eb12ad078f819d9f27")
+        .expect("Fail");
+    let (pubkey, _) = SchnorrPubkey::from_privkey(&privkey).expect("Fail");
+    assert_eq!(
+      "1777701648fa4dd93c74edd9d58cfcc7bdc2fa30a2f6fa908b6fd70c92833cfb",
+      pubkey.to_hex()
+    );
+
+    let tx_hex = "020000000116d975e4c2cea30f72f4f5fe528f5a0727d9ea149892a50c030d44423088ea2f0000000000ffffffff0130f1029500000000160014164e985d0fc92c927a66c0cbaf78e6ea389629d500000000";
+
+    let addr = Address::taproot(&pubkey, &Network::Testnet).expect("Fail");
+    assert_eq!(
+      "tb1pzamhq9jglfxaj0r5ahvatr8uc77u973s5tm04yytdltsey5r8naskf8ee6",
+      addr.to_str()
+    );
+
+    let utxos = [UtxoData::from_locking_script(
+      &OutPoint::new(
+        &Txid::from_str("2fea883042440d030ca5929814ead927075a8f52fef5f4720fa3cec2e475d916")
+          .expect("Fail"),
+        0,
+      ),
+      2499999000,
+      addr.get_locking_script(),
+      &Network::Mainnet,
+    )
+    .expect("Fail")];
+    let outpoint = utxos[0].outpoint.clone();
+
+    let mut tx = Transaction::from_str(tx_hex).expect("Fail");
+
+    tx = tx.append_utxo_list(&utxos).expect("Fail");
+
+    let sighash_type = SigHashType::All;
+    tx = tx
+      .sign_with_privkey_by_utxo_list(&outpoint, &privkey, &sighash_type, &[], &[])
+      .expect("Fail");
+    assert_eq!("0200000000010116d975e4c2cea30f72f4f5fe528f5a0727d9ea149892a50c030d44423088ea2f0000000000ffffffff0130f1029500000000160014164e985d0fc92c927a66c0cbaf78e6ea389629d5014161f75636003a870b7a1685abae84eedf8c9527227ac70183c376f7b3a35b07ebcbea14749e58ce1a87565b035b2f3963baa5ae3ede95e89fd607ab7849f208720100000000", tx.to_str());
+
+    tx.verify_sign_by_utxo_list(&outpoint).expect("Fail");
+  }
+
+  #[test]
+  fn tapscript_sign_test01() {
+    let privkey =
+      Privkey::from_str("305e293b010d29bf3c888b617763a438fee9054c8cab66eb12ad078f819d9f27")
+        .expect("Fail");
+    let (pubkey, _) = SchnorrPubkey::from_privkey(&privkey).expect("Fail");
+    assert_eq!(
+      "1777701648fa4dd93c74edd9d58cfcc7bdc2fa30a2f6fa908b6fd70c92833cfb",
+      pubkey.to_hex()
+    );
+
+    let script_checksig =
+      Script::from_asm(&format!("{} OP_CHECKSIG", pubkey.to_hex())).expect("Fail");
+
+    let mut tree = TapBranch::from_tapscript(&script_checksig).expect("Fail");
+    tree
+      .add_by_tapbranch_hash(
+        &ByteData::from_str("4d18084bb47027f47d428b2ed67e1ccace5520fdc36f308e272394e288d53b6d")
+          .expect("Fail")
+          .to_32byte_array(),
+      )
+      .expect("Fail");
+    tree
+      .add_by_tapbranch_hash(
+        &ByteData::from_str("dc82121e4ff8d23745f3859e8939ecb0a38af63e6ddea2fff97a7fd61a1d2d54")
+          .expect("Fail")
+          .to_32byte_array(),
+      )
+      .expect("Fail");
+
+    let (tweaked_pubkey, addr, control_block) = tree
+      .get_tweaked_pubkey(&pubkey, &Network::Mainnet)
+      .expect("Fail");
+    assert_eq!(
+      "3dee5a5387a2b57902f3a6e9da077726d19c6cc8c8c7b04bcf5a197b2a9b01d2",
+      tweaked_pubkey.to_hex()
+    );
+    assert_eq!(
+      "bc1p8hh955u8526hjqhn5m5a5pmhymgecmxgerrmqj70tgvhk25mq8fqw77n40",
+      addr.to_str()
+    );
+    assert_eq!(
+    "c01777701648fa4dd93c74edd9d58cfcc7bdc2fa30a2f6fa908b6fd70c92833cfb4d18084bb47027f47d428b2ed67e1ccace5520fdc36f308e272394e288d53b6ddc82121e4ff8d23745f3859e8939ecb0a38af63e6ddea2fff97a7fd61a1d2d54",
+    control_block.to_hex());
+    let tapleaf_hash = tree.get_tapleaf_hash().expect("Fail");
+    assert_eq!(
+      "dfc43ba9fc5f8a9e1b6d6a50600c704bb9e41b741d9ed6de6559a53d2f38e513",
+      ByteData::from_slice(&tapleaf_hash).to_hex()
+    );
+    let tweaked_privkey = tree.get_tweaked_privkey(&privkey).expect("Fail");
+    assert_eq!(
+      "a7d17bee0b6313cf864a1ac6f203aafd74a40703ffc050f66517e4f83ff41a03",
+      tweaked_privkey.to_hex()
+    );
+
+    let tx_hex = "02000000015b80a1af0e00c700bee9c8e4442bec933fcdc0c686dac2dc336caaaf186c5d190000000000ffffffff0130f1029500000000160014164e985d0fc92c927a66c0cbaf78e6ea389629d500000000";
+    let utxos = [UtxoData::from_locking_script(
+      &OutPoint::new(
+        &Txid::from_str("195d6c18afaa6c33dcc2da86c6c0cd3f93ec2b44e4c8e9be00c7000eafa1805b")
+          .expect("Fail"),
+        0,
+      ),
+      2499999000,
+      addr.get_locking_script(),
+      &Network::Mainnet,
+    )
+    .expect("Fail")];
+    let outpoint = utxos[0].outpoint.clone();
+
+    let mut tx = Transaction::from_str(tx_hex).expect("Fail");
+    let fee_data = tx.estimate_fee(&utxos, 2.0).expect("Fail");
+    assert_eq!(202, fee_data.get_total_fee());
+
+    tx = tx.append_utxo_list(&utxos).expect("Fail");
+
+    let sighash_type = SigHashType::All;
+    let annex = vec![];
+    let sighash = tx
+      .get_sighash_by_tapscript(
+        &outpoint,
+        &tapleaf_hash,
+        &sighash_type,
+        CODE_SEPARATOR_POSITION_FINAL,
+        &annex,
+      )
+      .expect("Fail");
+    let sighash_bytes = ByteData::from_slice(&sighash);
+    assert_eq!(
+      "80e53eaee13048aee9c6c13fa5a8529aad7fe2c362bfc16f1e2affc71f591d36",
+      sighash_bytes.to_hex()
+    );
+
+    let util = SchnorrUtil::new();
+    let aux_rand = ByteData::default();
+    let signature = util
+      .sign(&sighash_bytes, &privkey, &aux_rand)
+      .expect("Fail");
+    let sig = signature.get_sign_parameter(&sighash_type);
+    assert_eq!("f5aa6b260f9df687786cd3813ba83b476e195041bccea800f2571212f4aae9848a538b6175a4f8ea291d38e351ea7f612a3d700dca63cd3aff05d315c5698ee9", sig.to_hex());
+
+    tx = tx
+      .add_tapscript_sign(&outpoint, &[sig], &&script_checksig, &control_block, &annex)
+      .expect("Fail");
+    assert_eq!("020000000001015b80a1af0e00c700bee9c8e4442bec933fcdc0c686dac2dc336caaaf186c5d190000000000ffffffff0130f1029500000000160014164e985d0fc92c927a66c0cbaf78e6ea389629d50341f5aa6b260f9df687786cd3813ba83b476e195041bccea800f2571212f4aae9848a538b6175a4f8ea291d38e351ea7f612a3d700dca63cd3aff05d315c5698ee90122201777701648fa4dd93c74edd9d58cfcc7bdc2fa30a2f6fa908b6fd70c92833cfbac61c01777701648fa4dd93c74edd9d58cfcc7bdc2fa30a2f6fa908b6fd70c92833cfb4d18084bb47027f47d428b2ed67e1ccace5520fdc36f308e272394e288d53b6ddc82121e4ff8d23745f3859e8939ecb0a38af63e6ddea2fff97a7fd61a1d2d5400000000", tx.to_str());
+
+    let err_info = tx.verify_sign_by_utxo_list(&outpoint).expect_err("Fail");
+    assert_eq!(
+      "[IllegalState]: The script analysis of tapscript is not supported.",
+      err_info.to_string()
+    );
+    // The script analysis of tapscript is not supported.
+
+    // verify signature
+    let is_verify = util
+      .verify(&signature, &sighash_bytes, &pubkey)
+      .expect("Fail");
+    assert_eq!(true, is_verify);
   }
 }

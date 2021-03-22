@@ -515,96 +515,96 @@ fns! {
     tree_handle: *const c_void,
     tapscript: *const i8,
     leaf_version: c_uchar,
-    ) -> c_int;
+  ) -> c_int;
   pub fn CfdSetInitialTapBranchByHash(
     handle: *const c_void,
     tree_handle: *const c_void,
-      hash: *const i8,
-    ) -> c_int;
+    hash: *const i8,
+  ) -> c_int;
   pub fn CfdSetScriptTreeFromString(
     handle: *const c_void,
     tree_handle: *const c_void,
-      tree_string: *const i8,
-      tapscript: *const i8,
-      leaf_version: c_uchar,
-      control_nodes: *const i8,
-    ) -> c_int;
+    tree_string: *const i8,
+    tapscript: *const i8,
+    leaf_version: c_uchar,
+    control_nodes: *const i8,
+  ) -> c_int;
   pub fn CfdSetTapScriptByWitnessStack(
     handle: *const c_void,
     tree_handle: *const c_void,
-      control_block: *const i8,
-      tapscript: *const i8,
-      internal_pubkey: *mut *mut i8,
-    ) -> c_int;
+    control_block: *const i8,
+    tapscript: *const i8,
+    internal_pubkey: *mut *mut i8,
+  ) -> c_int;
   pub fn CfdAddTapBranchByHash(
     handle: *const c_void,
     tree_handle: *const c_void,
-      branch_hash: *const i8,
-    ) -> c_int;
+    branch_hash: *const i8,
+  ) -> c_int;
   pub fn CfdAddTapBranchByScriptTree(
     handle: *const c_void,
     tree_handle: *const c_void,
     branch_tree: *const c_void,
-    ) -> c_int;
+  ) -> c_int;
   pub fn CfdAddTapBranchByScriptTreeString(
     handle: *const c_void,
     tree_handle: *const c_void,
-      tree_string: *const i8,
-    ) -> c_int;
+    tree_string: *const i8,
+  ) -> c_int;
   pub fn CfdAddTapBranchByTapLeaf(
     handle: *const c_void,
     tree_handle: *const c_void,
-      tapscript: *const i8,
-      leaf_version: c_uchar,
-    ) -> c_int;
+    tapscript: *const i8,
+    leaf_version: c_uchar,
+  ) -> c_int;
   pub fn CfdGetRootTapLeaf(
     handle: *const c_void,
     tree_handle: *const c_void,
     leaf_version: *mut c_uchar,
     tapscript: *mut *mut i8,
     tap_leaf_hash: *mut *mut i8,
-    ) -> c_int;
+  ) -> c_int;
   pub fn CfdGetTapBranchCount(
     handle: *const c_void,
     tree_handle: *const c_void,
     branch_count: *mut c_uint,
-    ) -> c_int;
+  ) -> c_int;
   pub fn CfdGetTapBranchData(
-      handle: *const c_void,
-      tree_handle: *const c_void,
-      index_from_leaf: c_uchar,
-      is_root_data: bool,
-      branch_hash: *mut *mut i8,
-      leaf_version: *mut c_uchar,
-      tapscript: *mut *mut i8,
-      depth_by_leaf_or_end: *mut c_uchar,
-    ) -> c_int;
+    handle: *const c_void,
+    tree_handle: *const c_void,
+    index_from_leaf: c_uchar,
+    is_root_data: bool,
+    branch_hash: *mut *mut i8,
+    leaf_version: *mut c_uchar,
+    tapscript: *mut *mut i8,
+    depth_by_leaf_or_end: *mut c_uchar,
+  ) -> c_int;
   pub fn CfdGetTapBranchHandle(
     handle: *const c_void,
     tree_handle: *const c_void,
-      index_from_leaf: c_uchar,
-      branch_hash: *mut *mut i8,
-      branch_tree_handle: *mut *mut c_void,
-    ) -> c_int;
+    index_from_leaf: c_uchar,
+    branch_hash: *mut *mut i8,
+    branch_tree_handle: *mut *mut c_void,
+  ) -> c_int;
   pub fn CfdGetTaprootScriptTreeHash(
     handle: *const c_void,
     tree_handle: *const c_void,
-      internal_pubkey: *const i8,
-      hash: *mut *mut i8,
-      tap_leaf_hash: *mut *mut i8,
-      control_block: *mut *mut i8,
-    ) -> c_int;
+    internal_pubkey: *const i8,
+    hash: *mut *mut i8,
+    tap_leaf_hash: *mut *mut i8,
+    control_block: *mut *mut i8,
+  ) -> c_int;
   pub fn CfdGetTaprootTweakedPrivkey(
     handle: *const c_void,
     tree_handle: *const c_void,
-      internal_privkey: *const i8,
-      tweaked_privkey: *mut *mut i8,
-    ) -> c_int;
+    internal_privkey: *const i8,
+    tweaked_privkey: *mut *mut i8,
+  ) -> c_int;
   pub fn CfdGetTaprootScriptTreeSrting(
     handle: *const c_void,
     tree_handle: *const c_void,
-      tree_string: *mut *mut i8,
-    ) -> c_int;
+    tree_string: *mut *mut i8,
+  ) -> c_int;
   pub fn CfdFreeTaprootScriptTreeHandle(
     handle: *const c_void,
     tree_handle: *const c_void,
