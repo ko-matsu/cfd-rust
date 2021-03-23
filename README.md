@@ -39,7 +39,7 @@ curl https://sh.rustup.rs -sSf | sh  (select is 1)
 ```
 
 cmake version 3.14.2 or lower, download from website and install cmake.
-(https://cmake.org/download/)
+([https://cmake.org/download/](https://cmake.org/download/))
 
 ---
 
@@ -70,7 +70,7 @@ cargo build
 
 Using cmake find_package.
 
-1. get releases asset. (ex. https://github.com/cryptogarageinc/cfd/releases/download/v0.1.12/cfd-v0.1.12-win-vs2019-x86_64.zip )
+1. get releases asset. (ex. [https://github.com/cryptogarageinc/cfd/releases/download/v0.1.12/cfd-v0.1.12-win-vs2019-x86_64.zip](https://github.com/cryptogarageinc/cfd/releases/download/v0.1.12/cfd-v0.1.12-win-vs2019-x86_64.zip) )
 2. Expand to PATH
 
 ---
@@ -79,13 +79,13 @@ Using cmake find_package.
 
 ### Test
 
-```
+```shell
 cargo test
 ```
 
 ### Example
 
-```
+```shell
 cargo run --example create_pubkey_address
 ```
 
@@ -111,7 +111,8 @@ cargo run --example create_pubkey_address
 ### document tool
 
 - cargo
-  ```
+
+  ```shell
   cargo doc
   ```
 
@@ -125,7 +126,7 @@ cargo run --example create_pubkey_address
 
 ## Note
 
-### Git connection:
+### Git connection
 
 Git repository connections default to HTTPS.
 However, depending on the connection settings of GitHub, you may only be able to connect via SSH.
@@ -133,20 +134,21 @@ As a countermeasure, forcibly establish SSH connection by setting `CFD_CMAKE_GIT
 
 - Windows: (On the command line. Or set from the system setting screen.)
 
-```
+```bat
 set CFD_CMAKE_GIT_SSH=1
 ```
 
 - MacOS & Linux(Ubuntu):
 
-```
+```shell
 export CFD_CMAKE_GIT_SSH=1
 ```
 
-### Ignore git update for CMake External Project:
+### Ignore git update for CMake External Project
 
 Depending on your git environment, you may get the following error when checking out external:
-```
+
+```log
   Performing update step for 'libwally-core-download'
   Current branch cmake_build is up to date.
   No stash entries found.
@@ -166,12 +168,12 @@ Please set an environment variable that skips update processing.
 
 - Windows: (On the command line. Or set from the system setting screen.)
 
-```
+```bat
 set CFD_CMAKE_GIT_SKIP_UPDATE=1
 ```
 
 - MacOS & Linux(Ubuntu):
 
-```
+```shell
 export CFD_CMAKE_GIT_SKIP_UPDATE=1
 ```
