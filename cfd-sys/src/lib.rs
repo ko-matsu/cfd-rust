@@ -557,7 +557,7 @@ fns! {
     tapscript: *const i8,
     leaf_version: c_uchar,
   ) -> c_int;
-  pub fn CfdGetRootTapLeaf(
+  pub fn CfdGetBaseTapLeaf(
     handle: *const c_void,
     tree_handle: *const c_void,
     leaf_version: *mut c_uchar,

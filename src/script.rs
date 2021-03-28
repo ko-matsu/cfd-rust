@@ -20,7 +20,7 @@ use std::str::FromStr;
 use self::cfd_sys::{
   CfdAddMultisigScriptData, CfdAddTapBranchByScriptTreeString, CfdConvertScriptAsmToHex,
   CfdFinalizeMultisigScript, CfdFreeMultisigScriptHandle, CfdFreeScriptItemHandle,
-  CfdFreeTaprootScriptTreeHandle, CfdGetRootTapLeaf, CfdGetScriptItem, CfdGetTapBranchCount,
+  CfdFreeTaprootScriptTreeHandle, CfdGetBaseTapLeaf, CfdGetScriptItem, CfdGetTapBranchCount,
   CfdGetTapBranchData, CfdGetTapBranchHandle, CfdGetTaprootScriptTreeHash,
   CfdGetTaprootScriptTreeSrting, CfdGetTaprootTweakedPrivkey, CfdInitializeMultisigScript,
   CfdInitializeTaprootScriptTree, CfdParseScript, CfdSetScriptTreeFromString,
@@ -706,7 +706,7 @@ impl TapBranch {
     let mut tap_leaf_hash: *mut c_char = ptr::null_mut();
     let mut leaf_version: c_uchar = 0;
     let error_code = unsafe {
-      CfdGetRootTapLeaf(
+      CfdGetBaseTapLeaf(
         handle.as_handle(),
         handle.as_tree_handle(),
         &mut leaf_version,
@@ -853,7 +853,7 @@ impl TapBranch {
       let mut tap_leaf_hash: *mut c_char = ptr::null_mut();
       let mut leaf_version: c_uchar = 0;
       let error_code = unsafe {
-        CfdGetRootTapLeaf(
+        CfdGetBaseTapLeaf(
           handle.as_handle(),
           handle.as_tree_handle(),
           &mut leaf_version,
