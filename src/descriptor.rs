@@ -186,7 +186,7 @@ impl KeyData {
   pub fn from_schnorr_pubkey(schnorr_pubkey: &SchnorrPubkey) -> KeyData {
     match schnorr_pubkey.valid() {
       true => KeyData {
-        key_type: DescriptorKeyType::Bip32Priv,
+        key_type: DescriptorKeyType::Schnorr,
         pubkey: Pubkey::default(),
         ext_pubkey: ExtPubkey::default(),
         ext_privkey: ExtPrivkey::default(),
@@ -1031,6 +1031,10 @@ impl Descriptor {
     &self.root_data.address
   }
 
+  pub fn get_script_tree(&self) -> &TapBranch {
+    &self.root_data.script_tree
+  }
+
   /// Exist script-hash.
   ///
   /// # Example
@@ -1095,6 +1099,10 @@ impl Descriptor {
       }
       _ => false,
     }
+  }
+
+  pub fn has_taproot(&self) -> bool {
+    self.root_data.script_type == DescriptorScriptType::Taproot
   }
 
   pub fn get_key_data(&self) -> Result<&KeyData, CfdError> {
@@ -1177,11 +1185,11 @@ impl Descriptor {
         Ok(KeyData::from_ext_privkey(&ext_key_obj))
       }
       DescriptorKeyType::Schnorr => {
-        let ext_key_obj = match schnorr_pubkey.is_empty() {
+        let key_obj = match schnorr_pubkey.is_empty() {
           true => SchnorrPubkey::from_str(pubkey)?,
           _ => SchnorrPubkey::from_str(schnorr_pubkey)?,
         };
-        Ok(KeyData::from_schnorr_pubkey(&ext_key_obj))
+        Ok(KeyData::from_schnorr_pubkey(&key_obj))
       }
       _ => Err(CfdError::Internal("invalid key type status.".to_string())),
     }
