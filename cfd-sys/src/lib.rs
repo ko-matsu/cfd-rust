@@ -121,6 +121,24 @@ fns! {
     descriptor_handle: *mut *mut c_void,
     max_index: *mut c_uint,
   ) -> c_int;
+  pub fn CfdGetDescriptorRootData(
+    handle: *const c_void,
+    descriptor_handle: *const c_void,
+    script_type: *mut c_int,
+    locking_script: *mut *mut c_char,
+    address: *mut *mut c_char,
+    hash_type: *mut c_int,
+    redeem_script: *mut *mut c_char,
+    key_type: *mut c_int,
+    pubkey: *mut *mut c_char,
+    ext_pubkey: *mut *mut c_char,
+    ext_privkey: *mut *mut c_char,
+    schnorr_pubkey: *mut *mut c_char,
+    tree_string: *mut *mut c_char,
+    is_multisig: *mut bool,
+    max_key_num: *mut c_uint,
+    req_sig_num: *mut c_uint,
+  ) -> c_int;
   pub fn CfdGetDescriptorData(
     handle: *const c_void,
     descriptor_handle: *const c_void,
