@@ -360,9 +360,7 @@ mod elements_tests {
   fn blind_tx_test() {
     let mut tx = ConfidentialTransaction::from_str("0200000000020f231181a6d8fa2c5f7020948464110fbcc925f94d673d5752ce66d00250a1570000000000ffffffff0f231181a6d8fa2c5f7020948464110fbcc925f94d673d5752ce66d00250a1570100008000ffffffffd8bbe31bc590cbb6a47d2e53a956ec25d8890aefd60dcfc93efd34727554890b0683fe0819a4f9770c8a7cd5824e82975c825e017aff8ba0d6a5eb4959cf9c6f010000000023c346000004017981c1f171d7973a1fd922652f559f47d6d1506a4be2394b27a54951957f6c1801000000003b947f6002200d8510dfcf8e2330c0795c771d1e6064daab2f274ac32a6e2708df9bfa893d17a914ef3e40882e17d6e477082fcafeb0f09dc32d377b87010bad521bafdac767421d45b71b29a349c7b2ca2a06b5d8e3b5898c91df2769ed010000000029b9270002cc645552109331726c0ffadccab21620dd7a5a33260c6ac7bd1c78b98cb1e35a1976a9146c22e209d36612e0d9d2a20b814d7d8648cc7a7788ac017981c1f171d7973a1fd922652f559f47d6d1506a4be2394b27a54951957f6c1801000000000000c350000001cdb0ed311810e61036ac9255674101497850f5eee5e4320be07479c05473cbac010000000023c3460003ce4c4eac09fe317f365e45c00ffcf2e9639bc0fd792c10f72cdc173c4e5ed8791976a9149bdcb18911fa9faad6632ca43b81739082b0a19588ac00000000").expect("Fail");
 
-    let mut utxos: Vec<ElementsUtxoData> = vec![];
-    // set utxo data
-    utxos.push(
+    let utxos: Vec<ElementsUtxoData> = vec![
       ElementsUtxoData::from_outpoint(
         &OutPoint::from_str(
           "57a15002d066ce52573d674df925c9bc0f1164849420705f2cfad8a68111230f",
@@ -382,8 +380,6 @@ mod elements_tests {
         &BlindFactor::from_str("ae0f46d1940f297c2dc3bbd82bf8ef6931a2431fbb05b3d3bc5df41af86ae808")
           .expect("Fail"),
       ),
-    );
-    utxos.push(
       ElementsUtxoData::from_outpoint(
         &OutPoint::from_str(
           "57a15002d066ce52573d674df925c9bc0f1164849420705f2cfad8a68111230f",
@@ -403,7 +399,7 @@ mod elements_tests {
         &BlindFactor::from_str("62e36e1f0fa4916b031648a6b6903083069fa587572a88b729250cde528cfd3b")
           .expect("Fail"),
       ),
-    );
+    ];
 
     let mut issuance_keys = IssuanceKeyMap::default();
     let ct_address_list: Vec<ConfidentialAddress> = vec![];
@@ -529,9 +525,7 @@ mod elements_tests {
   fn blind_tx_and_option_test() {
     let tx = ConfidentialTransaction::from_str("0200000000020f231181a6d8fa2c5f7020948464110fbcc925f94d673d5752ce66d00250a1570000000000ffffffff0f231181a6d8fa2c5f7020948464110fbcc925f94d673d5752ce66d00250a1570100008000ffffffffd8bbe31bc590cbb6a47d2e53a956ec25d8890aefd60dcfc93efd34727554890b0683fe0819a4f9770c8a7cd5824e82975c825e017aff8ba0d6a5eb4959cf9c6f010000000023c346000004017981c1f171d7973a1fd922652f559f47d6d1506a4be2394b27a54951957f6c1801000000003b947f6002200d8510dfcf8e2330c0795c771d1e6064daab2f274ac32a6e2708df9bfa893d17a914ef3e40882e17d6e477082fcafeb0f09dc32d377b87010bad521bafdac767421d45b71b29a349c7b2ca2a06b5d8e3b5898c91df2769ed010000000029b9270002cc645552109331726c0ffadccab21620dd7a5a33260c6ac7bd1c78b98cb1e35a1976a9146c22e209d36612e0d9d2a20b814d7d8648cc7a7788ac017981c1f171d7973a1fd922652f559f47d6d1506a4be2394b27a54951957f6c1801000000000000c350000001cdb0ed311810e61036ac9255674101497850f5eee5e4320be07479c05473cbac010000000023c3460003ce4c4eac09fe317f365e45c00ffcf2e9639bc0fd792c10f72cdc173c4e5ed8791976a9149bdcb18911fa9faad6632ca43b81739082b0a19588ac00000000").expect("Fail");
 
-    let mut utxos: Vec<ElementsUtxoData> = vec![];
-    // set utxo data
-    utxos.push(
+    let utxos: Vec<ElementsUtxoData> = vec![
       ElementsUtxoData::from_outpoint(
         &OutPoint::from_str(
           "57a15002d066ce52573d674df925c9bc0f1164849420705f2cfad8a68111230f",
@@ -551,8 +545,6 @@ mod elements_tests {
         &BlindFactor::from_str("ae0f46d1940f297c2dc3bbd82bf8ef6931a2431fbb05b3d3bc5df41af86ae808")
           .expect("Fail"),
       ),
-    );
-    utxos.push(
       ElementsUtxoData::from_outpoint(
         &OutPoint::from_str(
           "57a15002d066ce52573d674df925c9bc0f1164849420705f2cfad8a68111230f",
@@ -572,7 +564,7 @@ mod elements_tests {
         &BlindFactor::from_str("62e36e1f0fa4916b031648a6b6903083069fa587572a88b729250cde528cfd3b")
           .expect("Fail"),
       ),
-    );
+    ];
 
     let mut issuance_keys = IssuanceKeyMap::default();
     let mut ct_address_list: Vec<ConfidentialAddress> = vec![];
@@ -980,8 +972,7 @@ mod elements_tests {
     let desc2 = Descriptor::new(desc_multi, &Network::ElementsRegtest).expect("Fail");
 
     // set utxo data
-    let mut utxos: Vec<ElementsUtxoData> = vec![];
-    utxos.push(
+    let utxos: Vec<ElementsUtxoData> = vec![
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "57a15002d066ce52573d674df925c9bc0f1164849420705f2cfad8a68111230f",
@@ -1002,8 +993,6 @@ mod elements_tests {
         &BlindFactor::from_str("ae0f46d1940f297c2dc3bbd82bf8ef6931a2431fbb05b3d3bc5df41af86ae808")
           .expect("Fail"),
       ),
-    );
-    utxos.push(
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "57a15002d066ce52573d674df925c9bc0f1164849420705f2cfad8a68111230f",
@@ -1025,7 +1014,7 @@ mod elements_tests {
           .expect("Fail"),
       )
       .set_option_info(true, true, false, 0, &Script::default()),
-    );
+    ];
 
     // estimate fee on blind tx
     let mut option = FeeOption::new(&Network::LiquidV1);
@@ -1090,9 +1079,10 @@ mod elements_tests {
       &Network::LiquidV1,
     )
     .expect("Fail");
-    let mut target_list: Vec<FundTargetOption> = vec![];
-    target_list.push(FundTargetOption::from_asset(0, &fee_asset, &addr1));
-    target_list.push(FundTargetOption::from_asset(0, &asset_b, &addr2));
+    let target_list: Vec<FundTargetOption> = vec![
+      FundTargetOption::from_asset(0, &fee_asset, &addr1),
+      FundTargetOption::from_asset(0, &asset_b, &addr2),
+    ];
     let mut option = FeeOption::new(&Network::LiquidV1);
     option.fee_rate = 0.1;
     option.fee_asset = fee_asset;
@@ -1211,9 +1201,10 @@ mod elements_tests {
       &Network::LiquidV1,
     )
     .expect("Fail");
-    let mut target_list: Vec<FundTargetOption> = vec![];
-    target_list.push(FundTargetOption::from_asset(0, &fee_asset, &addr1));
-    target_list.push(FundTargetOption::from_asset(0, &asset_b, &addr2));
+    let target_list: Vec<FundTargetOption> = vec![
+      FundTargetOption::from_asset(0, &fee_asset, &addr1),
+      FundTargetOption::from_asset(0, &asset_b, &addr2),
+    ];
     let mut option = FeeOption::new(&Network::LiquidV1);
     option.fee_rate = 0.1;
     option.fee_asset = fee_asset;
@@ -1296,11 +1287,10 @@ mod elements_tests {
       &Network::ElementsRegtest,
     )
     .expect("Fail");
-    let mut target_list: Vec<FundTargetOption> = vec![];
-    target_list.push(FundTargetOption::from_asset_and_address(
-      0, &fee_asset, &ct_addr1,
-    ));
-    target_list.push(FundTargetOption::from_asset(0, &asset_b, &addr2));
+    let target_list: Vec<FundTargetOption> = vec![
+      FundTargetOption::from_asset_and_address(0, &fee_asset, &ct_addr1),
+      FundTargetOption::from_asset(0, &asset_b, &addr2),
+    ];
     let mut option = FeeOption::new(&Network::ElementsRegtest);
     option.fee_rate = 0.1;
     option.fee_asset = fee_asset;
@@ -1377,9 +1367,10 @@ mod elements_tests {
       &Network::Mainnet,
     )
     .expect("Fail");
-    let mut target_list: Vec<FundTargetOption> = vec![];
-    target_list.push(FundTargetOption::from_asset(0, &fee_asset, &addr1));
-    target_list.push(FundTargetOption::from_asset(0, &asset_b, &addr2));
+    let target_list: Vec<FundTargetOption> = vec![
+      FundTargetOption::from_asset(0, &fee_asset, &addr1),
+      FundTargetOption::from_asset(0, &asset_b, &addr2),
+    ];
     let mut option = FeeOption::new(&Network::ElementsRegtest);
     option.fee_rate = 0.1;
     option.fee_asset = fee_asset;
@@ -1402,8 +1393,7 @@ mod elements_tests {
     let desc2 = Descriptor::new(desc_multi, &Network::ElementsRegtest).expect("Fail");
 
     // set utxo data
-    let mut utxos: Vec<ElementsUtxoData> = vec![];
-    utxos.push(
+    let utxos: Vec<ElementsUtxoData> = vec![
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "57a15002d066ce52573d674df925c9bc0f1164849420705f2cfad8a68111230f",
@@ -1424,8 +1414,6 @@ mod elements_tests {
         &BlindFactor::from_str("ae0f46d1940f297c2dc3bbd82bf8ef6931a2431fbb05b3d3bc5df41af86ae808")
           .expect("Fail"),
       ),
-    );
-    utxos.push(
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "57a15002d066ce52573d674df925c9bc0f1164849420705f2cfad8a68111230f",
@@ -1446,7 +1434,7 @@ mod elements_tests {
         &BlindFactor::from_str("62e36e1f0fa4916b031648a6b6903083069fa587572a88b729250cde528cfd3b")
           .expect("Fail"),
       ),
-    );
+    ];
 
     let asset_1 = ConfidentialAsset::from_str(
       "186c7f955149a5274b39e24b6a50d1d6479f552f6522d91f3a97d771f1c18179",
@@ -1507,8 +1495,7 @@ mod elements_tests {
     let asset_c = ConfidentialAsset::from_str(ASSET_C).expect("Fail");
     let desc = "sh(wpkh([ef735203/0'/0'/7']022c2409fbf657ba25d97bb3dab5426d20677b774d4fc7bd3bfac27ff96ada3dd1))#4z2vy08x";
     let descriptor = Descriptor::new(desc, network).expect("Fail");
-    let mut list: Vec<ElementsUtxoData> = vec![];
-    list.push(
+    let list: Vec<ElementsUtxoData> = vec![
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "7ca81dd22c934747f4f5ab7844178445fe931fb248e0704c062b8f4fbd3d500a",
@@ -1520,8 +1507,6 @@ mod elements_tests {
         &descriptor,
       )
       .expect("Fail"),
-    );
-    list.push(
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "30f71f39d210f7ee291b0969c6935debf11395b0935dca84d30c810a75339a0a",
@@ -1533,8 +1518,6 @@ mod elements_tests {
         &descriptor,
       )
       .expect("Fail"),
-    );
-    list.push(
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "9e1ead91c432889cb478237da974dd1e9009c9e22694fd1e3999c40a1ef59b0a",
@@ -1546,8 +1529,6 @@ mod elements_tests {
         &descriptor,
       )
       .expect("Fail"),
-    );
-    list.push(
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "8f4af7ee42e62a3d32f25ca56f618fb2f5df3d4c3a9c59e2c3646c5535a3d40a",
@@ -1559,8 +1540,6 @@ mod elements_tests {
         &descriptor,
       )
       .expect("Fail"),
-    );
-    list.push(
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "4d97d0119b90421818bff4ec9033e5199199b53358f56390cb20f8148e76f40a",
@@ -1572,8 +1551,6 @@ mod elements_tests {
         &descriptor,
       )
       .expect("Fail"),
-    );
-    list.push(
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "b9720ed2265a4ced42425bffdb4ef90a473b4106811a802fce53f7c57487fa0b",
@@ -1585,8 +1562,6 @@ mod elements_tests {
         &descriptor,
       )
       .expect("Fail"),
-    );
-    list.push(
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "0000000000000000000000000000000000000000000000000000000000000b01",
@@ -1598,8 +1573,6 @@ mod elements_tests {
         &descriptor,
       )
       .expect("Fail"),
-    );
-    list.push(
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "0000000000000000000000000000000000000000000000000000000000000b02",
@@ -1611,8 +1584,6 @@ mod elements_tests {
         &descriptor,
       )
       .expect("Fail"),
-    );
-    list.push(
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "0000000000000000000000000000000000000000000000000000000000000b03",
@@ -1624,8 +1595,6 @@ mod elements_tests {
         &descriptor,
       )
       .expect("Fail"),
-    );
-    list.push(
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "0000000000000000000000000000000000000000000000000000000000000b04",
@@ -1637,8 +1606,6 @@ mod elements_tests {
         &descriptor,
       )
       .expect("Fail"),
-    );
-    list.push(
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "0000000000000000000000000000000000000000000000000000000000000c01",
@@ -1650,8 +1617,6 @@ mod elements_tests {
         &descriptor,
       )
       .expect("Fail"),
-    );
-    list.push(
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "0000000000000000000000000000000000000000000000000000000000000c02",
@@ -1663,7 +1628,7 @@ mod elements_tests {
         &descriptor,
       )
       .expect("Fail"),
-    );
+    ];
     list
   }
 
