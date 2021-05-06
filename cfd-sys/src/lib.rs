@@ -731,6 +731,15 @@ fns! {
     split_output_handle: *const c_void,
     txout_index: c_uint,
   ) -> c_int;
+  pub fn CfdUpdateWitnessStack(
+    handle: *const c_void,
+    create_handle: *const c_void,
+    stack_type: c_int,
+    txid: *const i8,
+    vout: c_uint,
+    stack_index: c_uint,
+    stack_item: *const i8,
+  ) -> c_int;
   pub fn CfdClearWitnessStack(
     handle: *const c_void,
     create_handle: *const c_void,
