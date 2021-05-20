@@ -4,11 +4,13 @@ extern crate cfd_rust;
 mod elements_tests {
   use cfd_rust::{
     decode_raw_transaction, get_default_blinding_key, get_issuance_blinding_key, Address,
-    BlindFactor, BlindOption, ByteData, ConfidentialAddress, ConfidentialAsset, ConfidentialNonce,
-    ConfidentialTransaction, ConfidentialTxOutData, ConfidentialValue, Descriptor,
-    ElementsUtxoData, ExtPrivkey, ExtPubkey, FeeOption, FundTargetOption, FundTransactionData,
-    HashType, InputAddress, IssuanceKeyMap, KeyIndexMap, Network, OutPoint, Privkey, Pubkey,
-    Script, SigHashType, SignParameter, TxInData, Txid,
+    BlindFactor, BlindOption, BlockHash, ByteData, ConfidentialAddress, ConfidentialAsset,
+    ConfidentialNonce, ConfidentialTransaction, ConfidentialTxOutData, ConfidentialValue,
+    Descriptor, ElementsUtxoData, ExtPrivkey, ExtPubkey, FeeOption, FundTargetOption,
+    FundTransactionData, HashType, InputAddress, IssuanceInputData, IssuanceKeyMap,
+    IssuanceOutputData, KeyIndexMap, Network, OutPoint, PeginInputData, PegoutInputData, Privkey,
+    Pubkey, ReissuanceInputData, Script, SigHashType, SignParameter, Transaction, TxInData,
+    TxOutData, Txid, UtxoData,
   };
   use std::str::FromStr;
 
@@ -360,9 +362,7 @@ mod elements_tests {
   fn blind_tx_test() {
     let mut tx = ConfidentialTransaction::from_str("0200000000020f231181a6d8fa2c5f7020948464110fbcc925f94d673d5752ce66d00250a1570000000000ffffffff0f231181a6d8fa2c5f7020948464110fbcc925f94d673d5752ce66d00250a1570100008000ffffffffd8bbe31bc590cbb6a47d2e53a956ec25d8890aefd60dcfc93efd34727554890b0683fe0819a4f9770c8a7cd5824e82975c825e017aff8ba0d6a5eb4959cf9c6f010000000023c346000004017981c1f171d7973a1fd922652f559f47d6d1506a4be2394b27a54951957f6c1801000000003b947f6002200d8510dfcf8e2330c0795c771d1e6064daab2f274ac32a6e2708df9bfa893d17a914ef3e40882e17d6e477082fcafeb0f09dc32d377b87010bad521bafdac767421d45b71b29a349c7b2ca2a06b5d8e3b5898c91df2769ed010000000029b9270002cc645552109331726c0ffadccab21620dd7a5a33260c6ac7bd1c78b98cb1e35a1976a9146c22e209d36612e0d9d2a20b814d7d8648cc7a7788ac017981c1f171d7973a1fd922652f559f47d6d1506a4be2394b27a54951957f6c1801000000000000c350000001cdb0ed311810e61036ac9255674101497850f5eee5e4320be07479c05473cbac010000000023c3460003ce4c4eac09fe317f365e45c00ffcf2e9639bc0fd792c10f72cdc173c4e5ed8791976a9149bdcb18911fa9faad6632ca43b81739082b0a19588ac00000000").expect("Fail");
 
-    let mut utxos: Vec<ElementsUtxoData> = vec![];
-    // set utxo data
-    utxos.push(
+    let utxos: Vec<ElementsUtxoData> = vec![
       ElementsUtxoData::from_outpoint(
         &OutPoint::from_str(
           "57a15002d066ce52573d674df925c9bc0f1164849420705f2cfad8a68111230f",
@@ -382,8 +382,6 @@ mod elements_tests {
         &BlindFactor::from_str("ae0f46d1940f297c2dc3bbd82bf8ef6931a2431fbb05b3d3bc5df41af86ae808")
           .expect("Fail"),
       ),
-    );
-    utxos.push(
       ElementsUtxoData::from_outpoint(
         &OutPoint::from_str(
           "57a15002d066ce52573d674df925c9bc0f1164849420705f2cfad8a68111230f",
@@ -403,7 +401,7 @@ mod elements_tests {
         &BlindFactor::from_str("62e36e1f0fa4916b031648a6b6903083069fa587572a88b729250cde528cfd3b")
           .expect("Fail"),
       ),
-    );
+    ];
 
     let mut issuance_keys = IssuanceKeyMap::default();
     let ct_address_list: Vec<ConfidentialAddress> = vec![];
@@ -529,9 +527,7 @@ mod elements_tests {
   fn blind_tx_and_option_test() {
     let tx = ConfidentialTransaction::from_str("0200000000020f231181a6d8fa2c5f7020948464110fbcc925f94d673d5752ce66d00250a1570000000000ffffffff0f231181a6d8fa2c5f7020948464110fbcc925f94d673d5752ce66d00250a1570100008000ffffffffd8bbe31bc590cbb6a47d2e53a956ec25d8890aefd60dcfc93efd34727554890b0683fe0819a4f9770c8a7cd5824e82975c825e017aff8ba0d6a5eb4959cf9c6f010000000023c346000004017981c1f171d7973a1fd922652f559f47d6d1506a4be2394b27a54951957f6c1801000000003b947f6002200d8510dfcf8e2330c0795c771d1e6064daab2f274ac32a6e2708df9bfa893d17a914ef3e40882e17d6e477082fcafeb0f09dc32d377b87010bad521bafdac767421d45b71b29a349c7b2ca2a06b5d8e3b5898c91df2769ed010000000029b9270002cc645552109331726c0ffadccab21620dd7a5a33260c6ac7bd1c78b98cb1e35a1976a9146c22e209d36612e0d9d2a20b814d7d8648cc7a7788ac017981c1f171d7973a1fd922652f559f47d6d1506a4be2394b27a54951957f6c1801000000000000c350000001cdb0ed311810e61036ac9255674101497850f5eee5e4320be07479c05473cbac010000000023c3460003ce4c4eac09fe317f365e45c00ffcf2e9639bc0fd792c10f72cdc173c4e5ed8791976a9149bdcb18911fa9faad6632ca43b81739082b0a19588ac00000000").expect("Fail");
 
-    let mut utxos: Vec<ElementsUtxoData> = vec![];
-    // set utxo data
-    utxos.push(
+    let utxos: Vec<ElementsUtxoData> = vec![
       ElementsUtxoData::from_outpoint(
         &OutPoint::from_str(
           "57a15002d066ce52573d674df925c9bc0f1164849420705f2cfad8a68111230f",
@@ -551,8 +547,6 @@ mod elements_tests {
         &BlindFactor::from_str("ae0f46d1940f297c2dc3bbd82bf8ef6931a2431fbb05b3d3bc5df41af86ae808")
           .expect("Fail"),
       ),
-    );
-    utxos.push(
       ElementsUtxoData::from_outpoint(
         &OutPoint::from_str(
           "57a15002d066ce52573d674df925c9bc0f1164849420705f2cfad8a68111230f",
@@ -572,7 +566,7 @@ mod elements_tests {
         &BlindFactor::from_str("62e36e1f0fa4916b031648a6b6903083069fa587572a88b729250cde528cfd3b")
           .expect("Fail"),
       ),
-    );
+    ];
 
     let mut issuance_keys = IssuanceKeyMap::default();
     let mut ct_address_list: Vec<ConfidentialAddress> = vec![];
@@ -980,8 +974,7 @@ mod elements_tests {
     let desc2 = Descriptor::new(desc_multi, &Network::ElementsRegtest).expect("Fail");
 
     // set utxo data
-    let mut utxos: Vec<ElementsUtxoData> = vec![];
-    utxos.push(
+    let utxos: Vec<ElementsUtxoData> = vec![
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "57a15002d066ce52573d674df925c9bc0f1164849420705f2cfad8a68111230f",
@@ -1002,8 +995,6 @@ mod elements_tests {
         &BlindFactor::from_str("ae0f46d1940f297c2dc3bbd82bf8ef6931a2431fbb05b3d3bc5df41af86ae808")
           .expect("Fail"),
       ),
-    );
-    utxos.push(
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "57a15002d066ce52573d674df925c9bc0f1164849420705f2cfad8a68111230f",
@@ -1025,7 +1016,7 @@ mod elements_tests {
           .expect("Fail"),
       )
       .set_option_info(true, true, false, 0, &Script::default()),
-    );
+    ];
 
     // estimate fee on blind tx
     let mut option = FeeOption::new(&Network::LiquidV1);
@@ -1090,9 +1081,10 @@ mod elements_tests {
       &Network::LiquidV1,
     )
     .expect("Fail");
-    let mut target_list: Vec<FundTargetOption> = vec![];
-    target_list.push(FundTargetOption::from_asset(0, &fee_asset, &addr1));
-    target_list.push(FundTargetOption::from_asset(0, &asset_b, &addr2));
+    let target_list: Vec<FundTargetOption> = vec![
+      FundTargetOption::from_asset(0, &fee_asset, &addr1),
+      FundTargetOption::from_asset(0, &asset_b, &addr2),
+    ];
     let mut option = FeeOption::new(&Network::LiquidV1);
     option.fee_rate = 0.1;
     option.fee_asset = fee_asset;
@@ -1161,11 +1153,16 @@ mod elements_tests {
     tx = tx
       .set_reissuance(
         &outpoint,
-        600000000,
-        &input_utxo.asset_blind_factor,
-        &BlindFactor::from_str("6f9ccf5949eba5d6a08bff7a015e825c97824e82d57c8a0c77f9a41908fe8306")
+        &ReissuanceInputData {
+          asset_amount: 600000000,
+          blinding_nonce: input_utxo.asset_blind_factor.clone(),
+          entropy: BlindFactor::from_str(
+            "6f9ccf5949eba5d6a08bff7a015e825c97824e82d57c8a0c77f9a41908fe8306",
+          )
           .expect("Fail"),
-        &InputAddress::Addr(out_addr2),
+          asset_address: InputAddress::Addr(out_addr2),
+          ..ReissuanceInputData::default()
+        },
         &mut out_data,
       )
       .expect("Fail");
@@ -1211,9 +1208,10 @@ mod elements_tests {
       &Network::LiquidV1,
     )
     .expect("Fail");
-    let mut target_list: Vec<FundTargetOption> = vec![];
-    target_list.push(FundTargetOption::from_asset(0, &fee_asset, &addr1));
-    target_list.push(FundTargetOption::from_asset(0, &asset_b, &addr2));
+    let target_list: Vec<FundTargetOption> = vec![
+      FundTargetOption::from_asset(0, &fee_asset, &addr1),
+      FundTargetOption::from_asset(0, &asset_b, &addr2),
+    ];
     let mut option = FeeOption::new(&Network::LiquidV1);
     option.fee_rate = 0.1;
     option.fee_asset = fee_asset;
@@ -1296,11 +1294,10 @@ mod elements_tests {
       &Network::ElementsRegtest,
     )
     .expect("Fail");
-    let mut target_list: Vec<FundTargetOption> = vec![];
-    target_list.push(FundTargetOption::from_asset_and_address(
-      0, &fee_asset, &ct_addr1,
-    ));
-    target_list.push(FundTargetOption::from_asset(0, &asset_b, &addr2));
+    let target_list: Vec<FundTargetOption> = vec![
+      FundTargetOption::from_asset_and_address(0, &fee_asset, &ct_addr1),
+      FundTargetOption::from_asset(0, &asset_b, &addr2),
+    ];
     let mut option = FeeOption::new(&Network::ElementsRegtest);
     option.fee_rate = 0.1;
     option.fee_asset = fee_asset;
@@ -1377,9 +1374,10 @@ mod elements_tests {
       &Network::Mainnet,
     )
     .expect("Fail");
-    let mut target_list: Vec<FundTargetOption> = vec![];
-    target_list.push(FundTargetOption::from_asset(0, &fee_asset, &addr1));
-    target_list.push(FundTargetOption::from_asset(0, &asset_b, &addr2));
+    let target_list: Vec<FundTargetOption> = vec![
+      FundTargetOption::from_asset(0, &fee_asset, &addr1),
+      FundTargetOption::from_asset(0, &asset_b, &addr2),
+    ];
     let mut option = FeeOption::new(&Network::ElementsRegtest);
     option.fee_rate = 0.1;
     option.fee_asset = fee_asset;
@@ -1402,8 +1400,7 @@ mod elements_tests {
     let desc2 = Descriptor::new(desc_multi, &Network::ElementsRegtest).expect("Fail");
 
     // set utxo data
-    let mut utxos: Vec<ElementsUtxoData> = vec![];
-    utxos.push(
+    let utxos: Vec<ElementsUtxoData> = vec![
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "57a15002d066ce52573d674df925c9bc0f1164849420705f2cfad8a68111230f",
@@ -1424,8 +1421,6 @@ mod elements_tests {
         &BlindFactor::from_str("ae0f46d1940f297c2dc3bbd82bf8ef6931a2431fbb05b3d3bc5df41af86ae808")
           .expect("Fail"),
       ),
-    );
-    utxos.push(
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "57a15002d066ce52573d674df925c9bc0f1164849420705f2cfad8a68111230f",
@@ -1446,7 +1441,7 @@ mod elements_tests {
         &BlindFactor::from_str("62e36e1f0fa4916b031648a6b6903083069fa587572a88b729250cde528cfd3b")
           .expect("Fail"),
       ),
-    );
+    ];
 
     let asset_1 = ConfidentialAsset::from_str(
       "186c7f955149a5274b39e24b6a50d1d6479f552f6522d91f3a97d771f1c18179",
@@ -1486,13 +1481,18 @@ mod elements_tests {
     tx = tx
       .set_reissuance(
         &utxos[1].utxo.outpoint,
-        600000000,
-        &utxos[1].asset_blind_factor,
-        &BlindFactor::from_str("6f9ccf5949eba5d6a08bff7a015e825c97824e82d57c8a0c77f9a41908fe8306")
+        &ReissuanceInputData {
+          asset_amount: 600000000,
+          blinding_nonce: utxos[1].asset_blind_factor.clone(),
+          entropy: BlindFactor::from_str(
+            "6f9ccf5949eba5d6a08bff7a015e825c97824e82d57c8a0c77f9a41908fe8306",
+          )
           .expect("Fail"),
-        &InputAddress::Addr(
-          Address::from_str("2dodsWJgP3pTWWidK5hDxuYHqC1U4CEnT3n").expect("Fail"),
-        ),
+          asset_address: InputAddress::Addr(
+            Address::from_str("2dodsWJgP3pTWWidK5hDxuYHqC1U4CEnT3n").expect("Fail"),
+          ),
+          ..ReissuanceInputData::default()
+        },
         &mut data,
       )
       .expect("Fail");
@@ -1507,8 +1507,7 @@ mod elements_tests {
     let asset_c = ConfidentialAsset::from_str(ASSET_C).expect("Fail");
     let desc = "sh(wpkh([ef735203/0'/0'/7']022c2409fbf657ba25d97bb3dab5426d20677b774d4fc7bd3bfac27ff96ada3dd1))#4z2vy08x";
     let descriptor = Descriptor::new(desc, network).expect("Fail");
-    let mut list: Vec<ElementsUtxoData> = vec![];
-    list.push(
+    let list: Vec<ElementsUtxoData> = vec![
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "7ca81dd22c934747f4f5ab7844178445fe931fb248e0704c062b8f4fbd3d500a",
@@ -1520,8 +1519,6 @@ mod elements_tests {
         &descriptor,
       )
       .expect("Fail"),
-    );
-    list.push(
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "30f71f39d210f7ee291b0969c6935debf11395b0935dca84d30c810a75339a0a",
@@ -1533,8 +1530,6 @@ mod elements_tests {
         &descriptor,
       )
       .expect("Fail"),
-    );
-    list.push(
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "9e1ead91c432889cb478237da974dd1e9009c9e22694fd1e3999c40a1ef59b0a",
@@ -1546,8 +1541,6 @@ mod elements_tests {
         &descriptor,
       )
       .expect("Fail"),
-    );
-    list.push(
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "8f4af7ee42e62a3d32f25ca56f618fb2f5df3d4c3a9c59e2c3646c5535a3d40a",
@@ -1559,8 +1552,6 @@ mod elements_tests {
         &descriptor,
       )
       .expect("Fail"),
-    );
-    list.push(
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "4d97d0119b90421818bff4ec9033e5199199b53358f56390cb20f8148e76f40a",
@@ -1572,8 +1563,6 @@ mod elements_tests {
         &descriptor,
       )
       .expect("Fail"),
-    );
-    list.push(
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "b9720ed2265a4ced42425bffdb4ef90a473b4106811a802fce53f7c57487fa0b",
@@ -1585,8 +1574,6 @@ mod elements_tests {
         &descriptor,
       )
       .expect("Fail"),
-    );
-    list.push(
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "0000000000000000000000000000000000000000000000000000000000000b01",
@@ -1598,8 +1585,6 @@ mod elements_tests {
         &descriptor,
       )
       .expect("Fail"),
-    );
-    list.push(
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "0000000000000000000000000000000000000000000000000000000000000b02",
@@ -1611,8 +1596,6 @@ mod elements_tests {
         &descriptor,
       )
       .expect("Fail"),
-    );
-    list.push(
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "0000000000000000000000000000000000000000000000000000000000000b03",
@@ -1624,8 +1607,6 @@ mod elements_tests {
         &descriptor,
       )
       .expect("Fail"),
-    );
-    list.push(
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "0000000000000000000000000000000000000000000000000000000000000b04",
@@ -1637,8 +1618,6 @@ mod elements_tests {
         &descriptor,
       )
       .expect("Fail"),
-    );
-    list.push(
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "0000000000000000000000000000000000000000000000000000000000000c01",
@@ -1650,8 +1629,6 @@ mod elements_tests {
         &descriptor,
       )
       .expect("Fail"),
-    );
-    list.push(
       ElementsUtxoData::from_descriptor(
         &OutPoint::from_str(
           "0000000000000000000000000000000000000000000000000000000000000c02",
@@ -1663,7 +1640,7 @@ mod elements_tests {
         &descriptor,
       )
       .expect("Fail"),
-    );
+    ];
     list
   }
 
@@ -1695,5 +1672,501 @@ mod elements_tests {
       )
       .expect("Fail");
     assert_eq!(expect_tx_hex, tx.to_str());
+  }
+
+  #[test]
+  fn split_txout_test() {
+    let dummy_asset = ConfidentialAsset::default();
+    let mut tx = ConfidentialTransaction::from_str(
+      "02000000000109c4149d4e59119f2b11b3e160b02694bc4ecbf56f6de4ab587128f86bf4e7d30000000000ffffffff0201f38611eb688e6fcd06f25e2faf52b9f98364dc14c379ab085f1b57d56b4b1a6f010000000005ee3fe00374eb131b54a7b528e5449b3827bcaa5069c259346810f20cf9079bd17b32fe481976a914d753351535a2a55f33ab39bbd6c70a55d46904e788ac01f38611eb688e6fcd06f25e2faf52b9f98364dc14c379ab085f1b57d56b4b1a6f01000000000007a120000000000000").expect("Fail");
+    tx = tx
+      .split_txout(
+        0,
+        &[
+          ConfidentialTxOutData::from_address(
+            9000000,
+            &dummy_asset,
+            &Address::from_str("ert1qz33wef9ehrvd7c64p27jf5xtvn50946xeekx50").expect("Fail"),
+          ),
+          ConfidentialTxOutData::from_address(
+            500000,
+            &dummy_asset,
+            &Address::from_str("XWMioJVK77vhKHgnSpaCcSBDgf93LFHzYg").expect("Fail"),
+          ),
+        ],
+      )
+      .expect("Fail");
+    assert_eq!(
+      "02000000000109c4149d4e59119f2b11b3e160b02694bc4ecbf56f6de4ab587128f86bf4e7d30000000000ffffffff0401f38611eb688e6fcd06f25e2faf52b9f98364dc14c379ab085f1b57d56b4b1a6f0100000000055d4a800374eb131b54a7b528e5449b3827bcaa5069c259346810f20cf9079bd17b32fe481976a914d753351535a2a55f33ab39bbd6c70a55d46904e788ac01f38611eb688e6fcd06f25e2faf52b9f98364dc14c379ab085f1b57d56b4b1a6f01000000000007a120000001f38611eb688e6fcd06f25e2faf52b9f98364dc14c379ab085f1b57d56b4b1a6f010000000000895440001600141462eca4b9b8d8df63550abd24d0cb64e8f2d74601f38611eb688e6fcd06f25e2faf52b9f98364dc14c379ab085f1b57d56b4b1a6f01000000000007a1200017a914d081b8e259b744aa903e1831cfce8956941273ce8700000000",
+      tx.to_str());
+
+    tx = ConfidentialTransaction::from_str(
+      "020000000002a38845c1a19b389f27217b91e2120273b447db3e595bba628f0be833f301a24a0000000000ffffffffa38845c1a19b389f27217b91e2120273b447db3e595bba628f0be833f301a24a0200000000ffffffff020125b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a010000000000001c8400000125b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a010000befe33cc397c03f234757d0e00e6a7a7a3b4b2b31fb0328d7b9f755cd1093d9f61892fef3116871976a91435ef6d4b59f26089dfe2abca21408e15fee42a3388ac00000000").expect("Fail");
+    tx = tx.split_txout(1, &[
+      ConfidentialTxOutData::from_confidential_address(
+        9997999992700, &dummy_asset,
+        &ConfidentialAddress::from_str(
+          "lq1qqf6e92446smp3hdp87a8rcue8nt4z7n39576f9nycphwr0farac2laprx8zp3m69z7axgjkka87fj6q66sunwxxytxeqzrd9w").expect("Fail")
+      ),
+      ConfidentialTxOutData::from_confidential_address(
+        1000000000, &dummy_asset,
+        &ConfidentialAddress::from_str(
+          "Azpn9vbC1Sjvwc2evnjaZjEHPdQxvdr4sTew6psnwxoomvdDBfpfDJNXU4Zthvhy1TkUgX4USjTZpjSL").expect("Fail")
+      ),
+    ]).expect("Fail");
+    assert_eq!(
+      "020000000002a38845c1a19b389f27217b91e2120273b447db3e595bba628f0be833f301a24a0000000000ffffffffa38845c1a19b389f27217b91e2120273b447db3e595bba628f0be833f301a24a0200000000ffffffff040125b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a010000000000001c8400000125b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a010000b5e620f4800003f234757d0e00e6a7a7a3b4b2b31fb0328d7b9f755cd1093d9f61892fef3116871976a91435ef6d4b59f26089dfe2abca21408e15fee42a3388ac0125b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a0100000917d73cef7c027592aab5d43618dda13fba71e3993cd7517a712d3da49664c06ee1bd3d1f70af160014f42331c418ef4517ba644ad6e9fc99681ad439370125b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a01000000003b9aca00027592aab5d43618dda13fba71e3993cd7517a712d3da49664c06ee1bd3d1f70af17a9149ec42b6cfa1b0bc3f55f07af29867057cb0b8a2e8700000000",
+      tx.to_str());
+
+    tx = ConfidentialTransaction::from_str("020000000002a38845c1a19b389f27217b91e2120273b447db3e595bba628f0be833f301a24a0000000000ffffffffa38845c1a19b389f27217b91e2120273b447db3e595bba628f0be833f301a24a0200000000ffffffff020125b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a010000000000001c8400000125b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a010000befe33cc397c03f234757d0e00e6a7a7a3b4b2b31fb0328d7b9f755cd1093d9f61892fef3116871976a91435ef6d4b59f26089dfe2abca21408e15fee42a3388ac00000000").expect("Fail");
+    tx = tx
+      .split_txout(
+        1,
+        &[
+          ConfidentialTxOutData::from_locking_script(
+            9997999992700,
+            &dummy_asset,
+            &Script::from_hex("0014f42331c418ef4517ba644ad6e9fc99681ad43937").expect("Fail"),
+            &ConfidentialNonce::from_str(
+              "027592aab5d43618dda13fba71e3993cd7517a712d3da49664c06ee1bd3d1f70af",
+            )
+            .expect("Fail"),
+          ),
+          ConfidentialTxOutData::from_locking_script(
+            1000000000,
+            &dummy_asset,
+            &Script::from_hex("a9149ec42b6cfa1b0bc3f55f07af29867057cb0b8a2e87").expect("Fail"),
+            &ConfidentialNonce::from_str(
+              "027592aab5d43618dda13fba71e3993cd7517a712d3da49664c06ee1bd3d1f70af",
+            )
+            .expect("Fail"),
+          ),
+        ],
+      )
+      .expect("Fail");
+    assert_eq!("020000000002a38845c1a19b389f27217b91e2120273b447db3e595bba628f0be833f301a24a0000000000ffffffffa38845c1a19b389f27217b91e2120273b447db3e595bba628f0be833f301a24a0200000000ffffffff040125b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a010000000000001c8400000125b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a010000b5e620f4800003f234757d0e00e6a7a7a3b4b2b31fb0328d7b9f755cd1093d9f61892fef3116871976a91435ef6d4b59f26089dfe2abca21408e15fee42a3388ac0125b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a0100000917d73cef7c027592aab5d43618dda13fba71e3993cd7517a712d3da49664c06ee1bd3d1f70af160014f42331c418ef4517ba644ad6e9fc99681ad439370125b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a01000000003b9aca00027592aab5d43618dda13fba71e3993cd7517a712d3da49664c06ee1bd3d1f70af17a9149ec42b6cfa1b0bc3f55f07af29867057cb0b8a2e8700000000",
+      tx.to_str());
+  }
+
+  #[test]
+  fn update_witness_stack_test() {
+    let mut tx = ConfidentialTransaction::from_str("0200000001010e3c60901da7ffc518253e5736b9b73fd8aa5f79f249fa75bfe662c0f6ee42c301000000171600140c2eade9f3c984d0b2cedc79075a5793b0f5ce05ffffffff0201f38611eb688e6fcd06f25e2faf52b9f98364dc14c379ab085f1b57d56b4b1a6f010000000005f5e100001976a914b3c03c18599d13a481d1eb8a0ac2cc156564b4c688ac01f38611eb688e6fcd06f25e2faf52b9f98364dc14c379ab085f1b57d56b4b1a6f01000000000007a1200000000000000000024730440220437d443d290dcbd21b9dfdc612ac6cc5134f5acca19aa3c90b870ec41480839d02205662e29994c06cbeba70640aa74c7a4aafa50dba52ff45117800a1680240af6b0104111111110000000000").expect("Fail");
+    tx = tx
+      .update_witness_stack(
+        &OutPoint::from_str(
+          "c342eef6c062e6bf75fa49f2795faad83fb7b936573e2518c5ffa71d90603c0e",
+          1,
+        )
+        .expect("Fail"),
+        1,
+        &ByteData::from_str("02d8595abf5033d37a8a04947a537e8b28e2cb863e1ccd742012334c47e2c87a09")
+          .expect("Fail"),
+      )
+      .expect("Fail");
+    assert_eq!(
+      "0200000001010e3c60901da7ffc518253e5736b9b73fd8aa5f79f249fa75bfe662c0f6ee42c301000000171600140c2eade9f3c984d0b2cedc79075a5793b0f5ce05ffffffff0201f38611eb688e6fcd06f25e2faf52b9f98364dc14c379ab085f1b57d56b4b1a6f010000000005f5e100001976a914b3c03c18599d13a481d1eb8a0ac2cc156564b4c688ac01f38611eb688e6fcd06f25e2faf52b9f98364dc14c379ab085f1b57d56b4b1a6f01000000000007a1200000000000000000024730440220437d443d290dcbd21b9dfdc612ac6cc5134f5acca19aa3c90b870ec41480839d02205662e29994c06cbeba70640aa74c7a4aafa50dba52ff45117800a1680240af6b012102d8595abf5033d37a8a04947a537e8b28e2cb863e1ccd742012334c47e2c87a090000000000",
+      tx.to_str());
+  }
+
+  #[test]
+  fn update_pegin_witness_stack_test() {
+    let mut tx = ConfidentialTransaction::from_str(
+      "0200000001017926299350fdc2f4d0da1d4f0fbbd3789d29f9dc016358ae42463c0cebf393f30000004000ffffffff020125b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a0100000002540ba97c0017a91414b71442e11941fd7807a82eabee13d6ec171ed9870125b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a010000000000003a84000000000000000000060800e40b54020000002025b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a2006226e46111a0b59caaf126043eb5bbf28c34f3a5e332a1fc7b2b73cf188910f16001412dcdeef890f60967896391c95b0e02c9258dfe5fdda060200000000010a945efd42ce42de413aa7398a95c35facc14ec5d35bb23e5f980014e94ab96a620000000017160014ca2041536307bbe086e8c7fe8563e1c9b9b6eb84feffffffe50b46ecadb5cc52a7ef149a23323464353415f02d7b4a943963b26a9beb2a030000000017160014ca2041536307bbe086e8c7fe8563e1c9b9b6eb84feffffff67173609ca4c13662356a2507c71e5d497baeff56a3c42af989f3b270bc870560000000017160014ca2041536307bbe086e8c7fe8563e1c9b9b6eb84feffffff784a9fd151fe2808949fae18afcf52244a77702b9a83950bc7ec52a8239104850000000017160014ca2041536307bbe086e8c7fe8563e1c9b9b6eb84feffffff259618278cecbae1bed8b7806133d14987c3c6118d2744707f509c58ea2c0e870000000017160014ca2041536307bbe086e8c7fe8563e1c9b9b6eb84feffffff5c30c2fdcb6ce0b666120777ec18ce5211dd4741f40f033648432694b0919da50000000017160014a8a7c0032d1d283e39889861b3f05156e379cfb6feffffffbb0f857d4b143c74c7fdb678bf41b65e7e3f2e7644b3613ae6370d21c0882ad60000000017160014a8a7c0032d1d283e39889861b3f05156e379cfb6feffffffbce488c283e07bf364edb5057e020aa3d137d8d6130711dc12f03f35564945680000000017160014ca2041536307bbe086e8c7fe8563e1c9b9b6eb84feffffff258cb927989780ac92a3952ffd1f54e9b65e59fb07219eb106840b5d76b547fb0000000017160014ca2041536307bbe086e8c7fe8563e1c9b9b6eb84feffffffe98ec686efbca9bdd18ae85a3a8235a607e1cfb6138bac1461d400cbbabbe00f0000000017160014a8a7c0032d1d283e39889861b3f05156e379cfb6feffffff0100e40b540200000017a91472c44f957fc011d97e3406667dca5b1c930c4026870247304402206b4de54956e864dfe3ff3a4957e329cf171e919498bb8f98c242bef7b0d5e3350220505355401a500aabf193b93492d6bceb93c3b183034f252d65a139245c7486a601210281465587e09d80f5a7b8ce94bab4a4571dc8cff4483cc9eb89e76ecfa650b6f40247304402200fc48c7b5bd6de74c951250c60e8e6c9d3a605dc557bdc93ce86e85d2f27834a02205d2a8768adad669683416d1126c8537ab1eb36b0e83d5d9e6a583297b7f9d2cb01210281465587e09d80f5a7b8ce94bab4a4571dc8cff4483cc9eb89e76ecfa650b6f40247304402207ad97500fbe6049d559a1e10586cd0b1f02baeb98dc641a971a506a57288aa0002202a6646bc4262904f6d1a9288c12ff586b5a674f5a351dfaba2698c8b8265366f01210281465587e09d80f5a7b8ce94bab4a4571dc8cff4483cc9eb89e76ecfa650b6f4024730440220271e41a1e8f953b6817333e43d6a5e2924b291d52120011a5f7f1fb8049ae41b02200f1a25ed9da813122caadf8edf8d01da190f9407c2b61c27d4b671e07136bce701210281465587e09d80f5a7b8ce94bab4a4571dc8cff4483cc9eb89e76ecfa650b6f402473044022050291184dcd4733de6e6a43d9efb1e21e7d2c563e9138481f04010f3acbb139f02206c01c3bfe4e5b71c4aac524a18f35e25ae7306ca110b3c3b079ae6da2b0a0a5701210281465587e09d80f5a7b8ce94bab4a4571dc8cff4483cc9eb89e76ecfa650b6f402473044022045a188c10aec4f1a3a6c8a3a3c9f7d4dc63b9eacc011839c907d1c5da206a1390220399ca60516204efd9d220eaa0c804867137133c4d70780223fdde699288af3790121031c01fd031bc09b385d138b3b2f44ec04c03934b66f6485f37a17b4899f1b8d7802473044022053621a5c74b313c648d179041c154152372060941d9c9080340eb913358b705602201ac178f639360356ca7d75656d92bd7801d976e74bd5d2e30d6310a94940d0bc0121031c01fd031bc09b385d138b3b2f44ec04c03934b66f6485f37a17b4899f1b8d780247304402207b4a7a271a8fc03e8045ca367cb64046fa06e5b13a105e67efe7dd6571503fcb022072852e1c3f87eeac039601a0df855fb5d65bbdcd3ad95ff96bfc7b534fd89f7601210281465587e09d80f5a7b8ce94bab4a4571dc8cff4483cc9eb89e76ecfa650b6f402473044022037e9f0943a79e155a57526e251cfd39e004552b76c0de892448eb939d2d12fdf02203a02f0045e8f90739eddc06c026c95b4a653aeb89528d851ab75952fd7db07b801210281465587e09d80f5a7b8ce94bab4a4571dc8cff4483cc9eb89e76ecfa650b6f402473044022057a9953ba83d5e710fc64e1c533d81b0913f434b3e1c865cebd6cb106e09fa77022012930afe63ae7f1115a2f3b13039e71387fc2d4ed0e36eaa7be55a754c8c84830121031c01fd031bc09b385d138b3b2f44ec04c03934b66f6485f37a17b4899f1b8d78130e00009700000020fe3b574c1ce6d5cb68fc518e86f7976e599fafc0a2e5754aace7ca16d97a7c78ef9325b8d4f0a4921e060fc5e71435f46a18fa339688142cd4b028c8488c9f8dd1495b5dffff7f200200000002000000024a180a6822abffc3b1080c49016899c6dac25083936df14af12f58db11958ef27926299350fdc2f4d0da1d4f0fbbd3789d29f9dc016358ae42463c0cebf393f3010500000000").expect("Fail");
+    tx = tx.update_pegin_witness_stack(
+      &OutPoint::from_str("f393f3eb0c3c4642ae586301dcf9299d78d3bb0f4f1ddad0f4c2fd5093292679", 0).expect("Fail"),
+      5,
+      &ByteData::from_str("000000204e28f541a3b2400720e1b7034c037e98e4806deb13f93927bf325eea3bcd5436a701767035de031ba3471b589ea214b54f0baa26d1118d2fb13a679f7b4b472e71128b5dffff7f2000000000020000000237f9a1552febc7194d5fac93e52a10dde4009ff485fbcc172b22d621b58c2d69109d857925ebfb477c6e6e70069814f279e4a6d871af9165631df4e5982e22710105").expect("Fail"),
+    ).expect("Fail");
+    assert_eq!(
+      "0200000001017926299350fdc2f4d0da1d4f0fbbd3789d29f9dc016358ae42463c0cebf393f30000004000ffffffff020125b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a0100000002540ba97c0017a91414b71442e11941fd7807a82eabee13d6ec171ed9870125b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a010000000000003a84000000000000000000060800e40b54020000002025b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a2006226e46111a0b59caaf126043eb5bbf28c34f3a5e332a1fc7b2b73cf188910f16001412dcdeef890f60967896391c95b0e02c9258dfe5fdda060200000000010a945efd42ce42de413aa7398a95c35facc14ec5d35bb23e5f980014e94ab96a620000000017160014ca2041536307bbe086e8c7fe8563e1c9b9b6eb84feffffffe50b46ecadb5cc52a7ef149a23323464353415f02d7b4a943963b26a9beb2a030000000017160014ca2041536307bbe086e8c7fe8563e1c9b9b6eb84feffffff67173609ca4c13662356a2507c71e5d497baeff56a3c42af989f3b270bc870560000000017160014ca2041536307bbe086e8c7fe8563e1c9b9b6eb84feffffff784a9fd151fe2808949fae18afcf52244a77702b9a83950bc7ec52a8239104850000000017160014ca2041536307bbe086e8c7fe8563e1c9b9b6eb84feffffff259618278cecbae1bed8b7806133d14987c3c6118d2744707f509c58ea2c0e870000000017160014ca2041536307bbe086e8c7fe8563e1c9b9b6eb84feffffff5c30c2fdcb6ce0b666120777ec18ce5211dd4741f40f033648432694b0919da50000000017160014a8a7c0032d1d283e39889861b3f05156e379cfb6feffffffbb0f857d4b143c74c7fdb678bf41b65e7e3f2e7644b3613ae6370d21c0882ad60000000017160014a8a7c0032d1d283e39889861b3f05156e379cfb6feffffffbce488c283e07bf364edb5057e020aa3d137d8d6130711dc12f03f35564945680000000017160014ca2041536307bbe086e8c7fe8563e1c9b9b6eb84feffffff258cb927989780ac92a3952ffd1f54e9b65e59fb07219eb106840b5d76b547fb0000000017160014ca2041536307bbe086e8c7fe8563e1c9b9b6eb84feffffffe98ec686efbca9bdd18ae85a3a8235a607e1cfb6138bac1461d400cbbabbe00f0000000017160014a8a7c0032d1d283e39889861b3f05156e379cfb6feffffff0100e40b540200000017a91472c44f957fc011d97e3406667dca5b1c930c4026870247304402206b4de54956e864dfe3ff3a4957e329cf171e919498bb8f98c242bef7b0d5e3350220505355401a500aabf193b93492d6bceb93c3b183034f252d65a139245c7486a601210281465587e09d80f5a7b8ce94bab4a4571dc8cff4483cc9eb89e76ecfa650b6f40247304402200fc48c7b5bd6de74c951250c60e8e6c9d3a605dc557bdc93ce86e85d2f27834a02205d2a8768adad669683416d1126c8537ab1eb36b0e83d5d9e6a583297b7f9d2cb01210281465587e09d80f5a7b8ce94bab4a4571dc8cff4483cc9eb89e76ecfa650b6f40247304402207ad97500fbe6049d559a1e10586cd0b1f02baeb98dc641a971a506a57288aa0002202a6646bc4262904f6d1a9288c12ff586b5a674f5a351dfaba2698c8b8265366f01210281465587e09d80f5a7b8ce94bab4a4571dc8cff4483cc9eb89e76ecfa650b6f4024730440220271e41a1e8f953b6817333e43d6a5e2924b291d52120011a5f7f1fb8049ae41b02200f1a25ed9da813122caadf8edf8d01da190f9407c2b61c27d4b671e07136bce701210281465587e09d80f5a7b8ce94bab4a4571dc8cff4483cc9eb89e76ecfa650b6f402473044022050291184dcd4733de6e6a43d9efb1e21e7d2c563e9138481f04010f3acbb139f02206c01c3bfe4e5b71c4aac524a18f35e25ae7306ca110b3c3b079ae6da2b0a0a5701210281465587e09d80f5a7b8ce94bab4a4571dc8cff4483cc9eb89e76ecfa650b6f402473044022045a188c10aec4f1a3a6c8a3a3c9f7d4dc63b9eacc011839c907d1c5da206a1390220399ca60516204efd9d220eaa0c804867137133c4d70780223fdde699288af3790121031c01fd031bc09b385d138b3b2f44ec04c03934b66f6485f37a17b4899f1b8d7802473044022053621a5c74b313c648d179041c154152372060941d9c9080340eb913358b705602201ac178f639360356ca7d75656d92bd7801d976e74bd5d2e30d6310a94940d0bc0121031c01fd031bc09b385d138b3b2f44ec04c03934b66f6485f37a17b4899f1b8d780247304402207b4a7a271a8fc03e8045ca367cb64046fa06e5b13a105e67efe7dd6571503fcb022072852e1c3f87eeac039601a0df855fb5d65bbdcd3ad95ff96bfc7b534fd89f7601210281465587e09d80f5a7b8ce94bab4a4571dc8cff4483cc9eb89e76ecfa650b6f402473044022037e9f0943a79e155a57526e251cfd39e004552b76c0de892448eb939d2d12fdf02203a02f0045e8f90739eddc06c026c95b4a653aeb89528d851ab75952fd7db07b801210281465587e09d80f5a7b8ce94bab4a4571dc8cff4483cc9eb89e76ecfa650b6f402473044022057a9953ba83d5e710fc64e1c533d81b0913f434b3e1c865cebd6cb106e09fa77022012930afe63ae7f1115a2f3b13039e71387fc2d4ed0e36eaa7be55a754c8c84830121031c01fd031bc09b385d138b3b2f44ec04c03934b66f6485f37a17b4899f1b8d78130e000097000000204e28f541a3b2400720e1b7034c037e98e4806deb13f93927bf325eea3bcd5436a701767035de031ba3471b589ea214b54f0baa26d1118d2fb13a679f7b4b472e71128b5dffff7f2000000000020000000237f9a1552febc7194d5fac93e52a10dde4009ff485fbcc172b22d621b58c2d69109d857925ebfb477c6e6e70069814f279e4a6d871af9165631df4e5982e2271010500000000",
+      tx.to_str());
+  }
+
+  #[test]
+  fn get_txout_index_test() {
+    let tx = ConfidentialTransaction::from_str("020000000002a38845c1a19b389f27217b91e2120273b447db3e595bba628f0be833f301a24a0000000000ffffffffa38845c1a19b389f27217b91e2120273b447db3e595bba628f0be833f301a24a0200000000ffffffff030125b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a010000000000001c8400000125b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a010000befe33cc397c03f234757d0e00e6a7a7a3b4b2b31fb0328d7b9f755cd1093d9f61892fef3116871976a91435ef6d4b59f26089dfe2abca21408e15fee42a3388ac0125b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a010000befe33cc397c03f234757d0e00e6a7a7a3b4b2b31fb0328d7b9f755cd1093d9f61892fef3116871976a91435ef6d4b59f26089dfe2abca21408e15fee42a3388ac00000000").expect("Fail");
+    let indexes = tx
+      .get_txout_indexes_by_address(
+        &Address::from_str("2deLw2MsbXTr44ZXKBS91midF2WzJPfQ8cz").expect("Fail"),
+      )
+      .expect("Fail");
+    assert_eq!(2, indexes.len());
+    if indexes.len() == 2 {
+      assert_eq!(1, indexes[0]);
+      assert_eq!(2, indexes[1]);
+    }
+  }
+
+  #[test]
+  fn issue_asset_test() {
+    let blinding_key =
+      Privkey::from_str("1c9c3636830860edfe1cc70649417f33b0799959ea7197a4e75a5ba2a326ddd3")
+        .expect("Fail");
+    let confidential_address = ConfidentialAddress::from_str(
+      "CTErYaEfjCbu7recW9N2PoJq4Qt6XAqSoEAq31vfjGjJvvLV3hRGnfGgFuyJw9AqYGgZh57nYLjzHGcM",
+    )
+    .expect("Fail");
+    let token_amount: i64 = 1000000000;
+
+    let mut tx = ConfidentialTransaction::from_str("020000000001db3e7442a3a033e04def374fe6e3ce4351122655705e55e9fb02c7135508775e0000000000ffffffff02017981c1f171d7973a1fd922652f559f47d6d1506a4be2394b27a54951957f6c1801000000003b9328e00017a9149d4a252d04e5072497ef2ac59574b1b14a7831b187017981c1f171d7973a1fd922652f559f47d6d1506a4be2394b27a54951957f6c1801000000000007a120000000000000").expect("Fail");
+    let mut issue_data = IssuanceOutputData::default();
+    tx = tx
+      .set_issuance(
+        &OutPoint::from_str(
+          "5e77085513c702fbe9555e705526125143cee3e64f37ef4de033a0a342743edb",
+          0,
+        )
+        .expect("Fail"),
+        &IssuanceInputData {
+          asset_amount: 500000000,
+          asset_address: InputAddress::CtAddr(
+            ConfidentialAddress::from_str(
+              "CTEmp5tY22tBaWCEUiEUReuRcQV95geubpwi1By249nnCbFU94iv75V1Y1ESRET7gU8JqbxrBTSjkaUx",
+            )
+            .expect("Fail"),
+          ),
+          token_amount,
+          token_address: InputAddress::CtAddr(confidential_address),
+          has_blind: false,
+          ..IssuanceInputData::default()
+        },
+        &mut issue_data,
+      )
+      .expect("Fail");
+    assert_eq!(
+      "020000000001db3e7442a3a033e04def374fe6e3ce4351122655705e55e9fb02c7135508775e0000008000ffffffff0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000001dcd650001000000003b9aca0004017981c1f171d7973a1fd922652f559f47d6d1506a4be2394b27a54951957f6c1801000000003b9328e00017a9149d4a252d04e5072497ef2ac59574b1b14a7831b187017981c1f171d7973a1fd922652f559f47d6d1506a4be2394b27a54951957f6c1801000000000007a12000000154d634b51f6463ef827c1aca10ebf9758ca38ed0b969d6be1f5e28afe021406e01000000001dcd6500024e93dfae62a90ff7ebf8813fd9ffcf1d22115b88c9020ac3a144eccef98e8b981976a9148bba9241b14f785130e7ff186901997a5a1cc65688ac019f8e8c650b600dd566a087727cf24c01a02095c0e4329c82f27bceb31cc880c901000000003b9aca0002fd54c734e48c544c3c3ad1aab0607f896eb95e23e7058b174a580826a7940ad81976a914e55f5b7134f05f779d0913413b6e0cb7d208780488ac00000000",
+      tx.to_str());
+    assert_eq!(
+      "6e4021e0af285e1fbed669b9d08ea38c75f9eb10ca1a7c82ef63641fb534d654",
+      issue_data.asset.as_str()
+    );
+    assert_eq!(
+      "c980c81cb3ce7bf2829c32e4c09520a0014cf27c7287a066d50d600b658c8e9f",
+      issue_data.token.as_str()
+    );
+
+    // blind
+    let base_asset = ConfidentialAsset::from_str(
+      "186c7f955149a5274b39e24b6a50d1d6479f552f6522d91f3a97d771f1c18179",
+    )
+    .expect("Fail");
+    let outpoint = OutPoint::from_str(
+      "5e77085513c702fbe9555e705526125143cee3e64f37ef4de033a0a342743edb",
+      0,
+    )
+    .expect("Fail");
+    tx = tx
+      .blind(
+        &[ElementsUtxoData {
+          asset_blind_factor: BlindFactor::from_str(
+            "28093061ab2e407c6015f8cb33f337ffb118eaf3beb2d254de64203aa27ecbf7",
+          )
+          .expect("Fail"),
+          amount_blind_factor: BlindFactor::from_str(
+            "f87734c279533d8beba96c5369e169e6caf5f307a34d72d4a0f9c9a7b8f8f269",
+          )
+          .expect("Fail"),
+          ..ElementsUtxoData::from_outpoint(&outpoint, 1000000000, &base_asset).expect("Fail")
+        }],
+        &IssuanceKeyMap::default(),
+        &[],
+        &KeyIndexMap::default(),
+        &BlindOption::default(),
+      )
+      .expect("Fail");
+    tx = tx
+      .sign_with_privkey(
+        &outpoint,
+        &HashType::P2wpkh,
+        &Privkey::from_str("cU4KjNUT7GjHm7CkjRjG46SzLrXHXoH3ekXmqa2jTCFPMkQ64sw1").expect("Fail"),
+        &SigHashType::All,
+        &ConfidentialValue::from_amount(1000000000).expect("Fail"),
+      )
+      .expect("Fail");
+
+    let fee_utxo_index = 0;
+    let token_index = 3;
+
+    let unblind_data = tx.unblind_txout(token_index, &blinding_key).expect("Fail");
+    assert_eq!(issue_data.token.as_str(), unblind_data.asset.as_str());
+    assert_eq!(token_amount, unblind_data.amount.to_amount());
+    assert_ne!(
+      "0000000000000000000000000000000000000000000000000000000000000000",
+      unblind_data.asset_blind_factor.to_hex()
+    );
+    assert_ne!(
+      "0000000000000000000000000000000000000000000000000000000000000000",
+      unblind_data.amount_blind_factor.to_hex()
+    );
+
+    // create reissue base tx
+    let mut reissue_tx = ConfidentialTransaction::create_tx(
+      2, 0,
+      &[
+        TxInData::new(
+          &OutPoint::new(tx.as_txid(), fee_utxo_index)),
+        TxInData::new(
+          &OutPoint::new(tx.as_txid(), token_index)),
+      ], &[
+        ConfidentialTxOutData::from_confidential_address(
+          999000000, &base_asset,
+          &ConfidentialAddress::from_str(
+            "el1qqf4026u44983693n58xhxd9ej6l0q4seka289pluyqr4seext7v5jl9xs3ya8x54m2guds5rsu04s7m5k3wpv3dr07xgxdla8kdvflhxv603xs3tm3wz"
+          ).expect("Fail"),
+        ),
+        ConfidentialTxOutData::from_fee(500000, &base_asset),
+        ConfidentialTxOutData::from_confidential_address(
+          token_amount, &issue_data.token,
+          &ConfidentialAddress::from_str(
+            "AzpotonWHeKeBs4mZfXbnVvNCR23oKZ5UzpccaAZeP3igcWZLT2anN1QdrTYPMcFBMRD5411hS7pmATo"
+          ).expect("Fail"),
+        ),
+      ],
+    ).expect("Fail");
+    let mut reissue_txout_data = ConfidentialTxOutData::default();
+    reissue_tx = reissue_tx
+      .set_reissuance(
+        &OutPoint::new(tx.as_txid(), token_index),
+        &ReissuanceInputData {
+          blinding_nonce: unblind_data.asset_blind_factor,
+          entropy: issue_data.entropy.clone(),
+          asset_amount: 300000000,
+          asset_address: InputAddress::CtAddr(
+            ConfidentialAddress::from_str(
+              "AzpkYfJkupsG2p8Px1BafsjzaxKEoMUFKypr2x7jd6kZQHcRyx6zYtZHCUEEzzSayr8Kj9JPNnWceL7W",
+            )
+            .expect("Fail"),
+          ),
+          ..ReissuanceInputData::default()
+        },
+        &mut reissue_txout_data,
+      )
+      .expect("Fail");
+    assert_eq!(issue_data.asset.as_str(), reissue_txout_data.asset.as_str());
+
+    let txout = reissue_tx.get_txout_list()[3].clone();
+    assert_eq!(issue_data.asset.as_str(), txout.asset.as_str());
+    assert_eq!(300000000, txout.value.to_amount());
+    assert_eq!(
+      "a914f70fa95299789b76e11b35164ad9ff94b24954f587",
+      txout.locking_script.to_hex()
+    );
+  }
+
+  #[test]
+  fn pegin_test() {
+    // fedpeg script
+    let fedpeg_script = Script::from_hex(
+      "522103aab896d53a8e7d6433137bbba940f9c521e085dd07e60994579b64a6d992cf79210291b7d0b1b692f8f524516ed950872e5da10fb1b808b5a526dedc6fed1cf29807210386aa9372fbab374593466bc5451dc59954e90787f08060964d95c87ef34ca5bb53ae").expect("Fail");
+    let privkey =
+      Privkey::from_str("cUfipPioYnHU61pfYTH9uuNoswRXx8rtzXhJZrsPeVV1LRFdTxvp").expect("Fail");
+    let pubkey = privkey.get_pubkey().expect("Fail");
+
+    // create pegin address
+    let pegin_data = Address::pegin_by_pubkey(
+      &fedpeg_script,
+      &pubkey,
+      &HashType::P2shP2wsh,
+      &Network::Regtest,
+    )
+    .expect("Fail");
+    assert_eq!(
+      "2MvmzAFKZ5xh44vyb7qY7NB2AoDuS55rVFW",
+      pegin_data.address.to_str()
+    );
+    assert_eq!(
+      "0014e794713e386d83f32baa0e9d03e47c0839dc57a8",
+      pegin_data.claim_script.to_hex()
+    );
+
+    // create bitcoin tx
+    let amount: i64 = 100000000;
+    let pegin_amount = amount - 500;
+    let outpoint = OutPoint::from_str(
+      "ea9d5a9e974af1d167305aa6ee598706d63274e8a40f4f33af97db37a7adde4c",
+      0,
+    )
+    .expect("Fail");
+    let mut tx = Transaction::create_tx(
+      2,
+      0,
+      &[TxInData::new(&outpoint)],
+      &[TxOutData::from_address(pegin_amount, &pegin_data.address)],
+    )
+    .expect("Fail");
+
+    tx = tx
+      .append_utxo_list(&[UtxoData::from_descriptor(
+        &outpoint,
+        amount,
+        &Descriptor::new(
+          "wpkh(cNYKHjNc33ZyNMcDck59yWm1CYohgPhr2DYyCtmWNkL6sqb5L1rH)",
+          &Network::Testnet,
+        )
+        .expect("Fail"),
+      )])
+      .expect("Fail");
+    tx = tx
+      .sign_with_privkey_by_utxo_list(
+        &outpoint,
+        &Privkey::from_str("cNYKHjNc33ZyNMcDck59yWm1CYohgPhr2DYyCtmWNkL6sqb5L1rH").expect("Fail"),
+        &SigHashType::All,
+        &[],
+        &[],
+      )
+      .expect("Fail");
+    assert_eq!(
+      "020000000001014cdeada737db97af334f0fa4e87432d6068759eea65a3067d1f14a979e5a9dea0000000000ffffffff010cdff5050000000017a91426b9ba9cf5d822b70cf490ad0394566f9db20c63870247304402200b3ca71e82551a333fe5c8ce9a8f8454eb8f08aa194180e5a87c79ccf2e46212022065c1f2a363ebcb155a80e234258394140d08f6ab807581953bb21a58f2d229a6012102fd54c734e48c544c3c3ad1aab0607f896eb95e23e7058b174a580826a7940ad800000000",
+      tx.to_str());
+    assert_eq!(
+      "12708508f0baf8691a3d7e22fd19afbf9bd8bf0d358e3310838bcc7916539c7b",
+      tx.as_txid().to_hex()
+    );
+
+    let pegin_index = 0;
+    let txout_proof = ByteData::from_str(
+      "00000020fe3b574c1ce6d5cb68fc518e86f7976e599fafc0a2e5754aace7ca16d97a7c78ef9325b8d4f0a4921e060fc5e71435f46a18fa339688142cd4b028c8488c9f8dd1495b5dffff7f200200000002000000024a180a6822abffc3b1080c49016899c6dac25083936df14af12f58db11958ef27926299350fdc2f4d0da1d4f0fbbd3789d29f9dc016358ae42463c0cebf393f30105").expect("Fail");
+
+    // create pegin tx
+    let genesis_block_hash =
+      BlockHash::from_str("0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206")
+        .expect("Fail");
+    let asset = ConfidentialAsset::from_str(
+      "5ac9f65c0efcc4775e0baec4ec03abdde22473cd3cf33c0419ca290e0751b225",
+    )
+    .expect("Fail");
+
+    let pegin_outpoint = OutPoint::new(tx.as_txid(), pegin_index);
+    let mut pegin_tx = ConfidentialTransaction::new(2, 0).expect("Fail");
+    pegin_tx = pegin_tx
+      .add_pegin_input(
+        &pegin_outpoint,
+        &PeginInputData {
+          amount: pegin_amount,
+          asset: asset.clone(),
+          mainchain_genesis_block_hash: genesis_block_hash,
+          claim_script: pegin_data.claim_script,
+          transaction: tx,
+          txout_proof,
+        },
+      )
+      .expect("Fail");
+
+    pegin_tx = pegin_tx.append_data(
+        &[],
+        &[
+          ConfidentialTxOutData::from_confidential_address(
+            99998500, &asset,
+            &ConfidentialAddress::from_str(
+              "el1qqtl9a3n6878ex25u0wv8u5qlzpfkycc0cftk65t52pkauk55jqka0fajk8d80lafn4t9kqxe77cu9ez2dyr6sq54lwy009uex").expect("Fail"),
+          ),
+          ConfidentialTxOutData::from_fee(1000, &asset),
+          ConfidentialTxOutData::from_locking_script(
+            0, &asset, &Script::from_asm("OP_RETURN").expect("Fail"),
+            &ConfidentialNonce::from_str(
+              "03662a01c232918c9deb3b330272483c3e4ec0c6b5da86df59252835afeb4ab5f9").expect("Fail"),
+          ),
+        ],
+      ).expect("Fail");
+
+    // add dummy output (for blind)
+    assert_eq!(
+      "0200000001017b9c531679cc8b8310338e350dbfd89bbfaf19fd227e3d1a69f8baf0088570120000004000ffffffff030125b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a010000000005f5db2402fe5ec67a3f8f932a9c7b987e501f105362630fc2576d5174506dde5a94902dd7160014a7b2b1da77ffa99d565b00d9f7b1c2e44a6907a80125b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a0100000000000003e800000125b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a01000000000000000003662a01c232918c9deb3b330272483c3e4ec0c6b5da86df59252835afeb4ab5f9016a0000000000000006080cdff505000000002025b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a2006226e46111a0b59caaf126043eb5bbf28c34f3a5e332a1fc7b2b73cf188910f160014e794713e386d83f32baa0e9d03e47c0839dc57a8c0020000000001014cdeada737db97af334f0fa4e87432d6068759eea65a3067d1f14a979e5a9dea0000000000ffffffff010cdff5050000000017a91426b9ba9cf5d822b70cf490ad0394566f9db20c63870247304402200b3ca71e82551a333fe5c8ce9a8f8454eb8f08aa194180e5a87c79ccf2e46212022065c1f2a363ebcb155a80e234258394140d08f6ab807581953bb21a58f2d229a6012102fd54c734e48c544c3c3ad1aab0607f896eb95e23e7058b174a580826a7940ad8000000009700000020fe3b574c1ce6d5cb68fc518e86f7976e599fafc0a2e5754aace7ca16d97a7c78ef9325b8d4f0a4921e060fc5e71435f46a18fa339688142cd4b028c8488c9f8dd1495b5dffff7f200200000002000000024a180a6822abffc3b1080c49016899c6dac25083936df14af12f58db11958ef27926299350fdc2f4d0da1d4f0fbbd3789d29f9dc016358ae42463c0cebf393f30105000000000000",
+      pegin_tx.to_str());
+
+    // blind
+    pegin_tx = pegin_tx
+      .blind(
+        &[ElementsUtxoData::from_outpoint(&pegin_outpoint, pegin_amount, &asset).expect("Fail")],
+        &IssuanceKeyMap::default(),
+        &[],
+        &KeyIndexMap::default(),
+        &BlindOption::default(),
+      )
+      .expect("Fail");
+    // add sign
+    pegin_tx
+      .sign_with_privkey(
+        &pegin_outpoint,
+        &HashType::P2wpkh,
+        &privkey,
+        &SigHashType::All,
+        &ConfidentialValue::from_amount(pegin_amount).expect("Fail"),
+      )
+      .expect("Fail");
+  }
+
+  #[test]
+  fn pegout_test() {
+    // mainchain address descriptor
+    let mainchain_xpubkey = ExtPubkey::from_str(
+      "xpub6A53gzNdDBQYCtFFpZT7kUpoBGpzWigaukrdF9xoUZt7cYMD2qCAHVLsstNoQEDMFJWdX78KvT6yxpC76aGCN5mENVdWtFGcWZoKdtLq5jW").expect("Fail");
+    let mainchain_pubkey = mainchain_xpubkey.get_pubkey();
+    let negate_mainchain_pubkey = mainchain_pubkey.negate().expect("Fail");
+    let mainchain_output_descriptor = format!("pkh({}/0/*)", mainchain_xpubkey.to_str());
+    let bip32_counter = 0;
+
+    let online_privkey =
+      Privkey::from_str("L52AgshDAE14NHJuovwAw8hyrTNK4YQjuiPC9EES4sfM7oBPzU4o").expect("Fail");
+    let online_pubkey = online_privkey.get_pubkey().expect("Fail");
+    let pak_entry = format!(
+      "{}{}",
+      negate_mainchain_pubkey.to_hex(),
+      online_pubkey.to_hex()
+    );
+    let whitelist = ByteData::from_str(&pak_entry).expect("Fail");
+
+    let genesis_block_hash =
+      BlockHash::from_str("0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206")
+        .expect("Fail");
+    let asset = ConfidentialAsset::from_str(
+      "5ac9f65c0efcc4775e0baec4ec03abdde22473cd3cf33c0419ca290e0751b225",
+    )
+    .expect("Fail");
+
+    let mut tx = ConfidentialTransaction::create_tx(
+      2,
+      0,
+      &[TxInData {
+        outpoint: OutPoint::from_str(
+          "4aa201f333e80b8f62ba5b593edb47b4730212e2917b21279f389ba1c14588a3",
+          0,
+        )
+        .expect("Fail"),
+        sequence: 4294967293,
+        script_sig: Script::default(),
+      }],
+      &[ConfidentialTxOutData::from_address(
+        209998999992700,
+        &asset,
+        &Address::from_str("XBMr6srTXmWuHifFd8gs54xYfiCBsvrksA").expect("Fail"),
+      )],
+    )
+    .expect("Fail");
+
+    let mut addr = Address::default();
+    tx = tx
+      .add_pegout_output(
+        &PegoutInputData {
+          amount: 1000000000,
+          asset: asset.clone(),
+          mainchain_network_type: Network::Mainnet,
+          elements_network_type: Network::LiquidV1,
+          mainchain_genesis_block_hash: genesis_block_hash,
+          online_privkey,
+          offline_output_descriptor: mainchain_output_descriptor,
+          bip32_counter,
+          whitelist,
+        },
+        &mut addr,
+      )
+      .expect("Fail");
+    assert_eq!("1NrcpiZmCxjC7KVKAYT22SzVhhcXtp5o4v", addr.to_str());
+
+    tx = tx
+      .append_data(&[], &[ConfidentialTxOutData::from_fee(7300, &asset)])
+      .expect("Fail");
+    assert_eq!("020000000001a38845c1a19b389f27217b91e2120273b447db3e595bba628f0be833f301a24a0000000000fdffffff030125b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a010000befe33cc397c0017a914001d6db698e75a5a8af771730c4ab258af30546b870125b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a01000000003b9aca0000a06a2006226e46111a0b59caaf126043eb5bbf28c34f3a5e332a1fc7b2b73cf188910f1976a914efbced4774546c03a8554ce2da27c0300c9dd43b88ac2103700dcb030588ed828d85f645b48971de0d31e8c0244da46710d18681627f5a4a4101044e949dcf8ac2daac82a3e4999ee28e2711661793570c4daab34cd38d76a425d6bfe102f3fea8be12109925fad32c78b65afea4de1d17a826e7375d0e2d00660125b251070e29ca19043cf33ccd7324e2ddab03ecc4ae0b5e77c4fc0e5cf6c95a010000000000001c84000000000000",
+      tx.to_str());
   }
 }
