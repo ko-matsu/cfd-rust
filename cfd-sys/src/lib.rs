@@ -185,6 +185,61 @@ fns! {
     descriptor: *const c_char,
     descriptor_added_checksum: *mut *mut c_char,
   ) -> c_int;
+
+  pub fn CfdInitializeBlockHandle(
+    handle: *const c_void,
+    network_type: c_int,
+    block_hex: *const c_char,
+    block_handle: *mut *mut c_void,
+  ) -> c_int;
+  pub fn CfdFreeBlockHandle(
+    handle: *const c_void,
+    block_handle: *const c_void,
+  ) -> c_int;
+  pub fn CfdGetBlockHash(
+    handle: *const c_void,
+    block_handle: *const c_void,
+    block_hash: *mut *mut c_char,
+  ) -> c_int;
+  pub fn CfdGetBlockHeaderData(
+    handle: *const c_void,
+    block_handle: *const c_void,
+    version: *mut c_uint,
+    prev_block_hash: *mut *mut c_char,
+    merkle_root_hash: *mut *mut c_char,
+    time: *mut c_uint,
+    bits: *mut c_uint,
+    nonce: *mut c_uint,
+  ) -> c_int;
+  pub fn CfdGetTransactionFromBlock(
+    handle: *const c_void,
+    block_handle: *const c_void,
+    txid: *const c_char,
+    tx_hex: *mut *mut c_char,
+  ) -> c_int;
+  pub fn CfdGetTxOutProof(
+    handle: *const c_void,
+    block_handle: *const c_void,
+    txid: *const c_char,
+    txout_proof: *mut *mut c_char,
+  ) -> c_int;
+  pub fn CfdExistTxidInBlock(
+    handle: *const c_void,
+    block_handle: *const c_void,
+    txid: *const c_char,
+  ) -> c_int;
+  pub fn CfdGetTxCountInBlock(
+    handle: *const c_void,
+    block_handle: *const c_void,
+    tx_count: *mut c_uint,
+  ) -> c_int;
+  pub fn CfdGetTxidFromBlock(
+    handle: *const c_void,
+    block_handle: *const c_void,
+    index: c_uint,
+    txid: *mut *mut c_char,
+  ) -> c_int;
+
   pub fn CfdCreateExtkeyFromSeed(
     handle: *const c_void,
     seed_hex: *const i8,
@@ -752,6 +807,13 @@ fns! {
     txid: *const i8,
     vout: c_uint,
     script_sig: *const i8,
+  ) -> c_int;
+  pub fn CfdUpdateTxInSequence(
+    handle: *const c_void,
+    create_handle: *const c_void,
+    txid: *const i8,
+    vout: c_uint,
+    sequence: c_uint,
   ) -> c_int;
   pub fn CfdSetTransactionUtxoData(
     handle: *const c_void,
