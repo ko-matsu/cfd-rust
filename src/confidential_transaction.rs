@@ -1819,6 +1819,27 @@ impl ConfidentialTransaction {
     })
   }
 
+  /// Update txin sequence.
+  ///
+  /// # Arguments
+  /// * `outpoint` - An outpoint.
+  /// * `sequence` - A sequence number.
+  pub fn update_txin_sequence(
+    &self,
+    outpoint: &OutPoint,
+    sequence: u32,
+  ) -> Result<ConfidentialTransaction, CfdError> {
+    let mut ope = ConfidentialTxOperation::new(&Network::LiquidV1);
+    let tx = ope.update_txin_sequence(&hex_from_bytes(&self.tx), outpoint, sequence)?;
+    Ok(ConfidentialTransaction {
+      tx,
+      data: ope.get_last_tx_data().clone(),
+      txin_list: ope.get_txin_list_cache().to_vec(),
+      txout_list: self.txout_list.clone(),
+      // txin_utxo_list: self.txin_utxo_list.clone(),
+    })
+  }
+
   /// Update witness stack.
   ///
   /// # Arguments
@@ -3676,6 +3697,33 @@ impl ConfidentialTxOperation {
     txout_list: &[ConfidentialTxOutData],
   ) -> Result<Vec<u8>, CfdError> {
     self.create_tx(0, 0, tx, txin_list, txout_list)
+  }
+
+  pub fn update_txin_sequence(
+    &mut self,
+    tx: &str,
+    outpoint: &OutPoint,
+    sequence: u32,
+  ) -> Result<Vec<u8>, CfdError> {
+    let mut handle = ErrorHandle::new()?;
+    let result = {
+      let tx_handle = TxDataHandle::new(&handle, &self.network, tx)?;
+      let tx_result = {
+        TransactionOperation::update_txin_sequence_internal(
+          &CreateTxData::new(&self.network),
+          &handle,
+          &tx_handle,
+          outpoint,
+          sequence,
+        )?;
+        self.get_txin_by_outpoint_internal(&handle, &tx_handle, &String::default(), outpoint)?;
+        self.get_tx_internal(&handle, &tx_handle, &String::default())
+      }?;
+      tx_handle.free_handle(&handle);
+      tx_result
+    };
+    handle.free_handle();
+    Ok(result)
   }
 
   pub fn update_witness_stack(

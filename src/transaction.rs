@@ -38,10 +38,10 @@ use self::cfd_sys::{
   CfdGetTxOutCountByHandle, CfdGetTxOutIndexByHandle, CfdGetTxOutIndexWithOffsetByHandle,
   CfdInitializeCoinSelection, CfdInitializeEstimateFee, CfdInitializeFundRawTx,
   CfdInitializeMultisigSign, CfdInitializeTransaction, CfdInitializeTxDataHandle,
-  CfdSetOptionFundRawTx, CfdSetTransactionUtxoData, CfdSplitTxOut, CfdUpdateTxOutAmount,
-  CfdUpdateWitnessStack, CfdVerifySignature, CfdVerifyTxSign, CfdVerifyTxSignByHandle,
-  DEFAULT_BLIND_MINIMUM_BITS, FUND_OPT_DUST_FEE_RATE, FUND_OPT_KNAPSACK_MIN_CHANGE,
-  FUND_OPT_LONG_TERM_FEE_RATE, WITNESS_STACK_TYPE_NORMAL,
+  CfdSetOptionFundRawTx, CfdSetTransactionUtxoData, CfdSplitTxOut, CfdUpdateTxInSequence,
+  CfdUpdateTxOutAmount, CfdUpdateWitnessStack, CfdVerifySignature, CfdVerifyTxSign,
+  CfdVerifyTxSignByHandle, DEFAULT_BLIND_MINIMUM_BITS, FUND_OPT_DUST_FEE_RATE,
+  FUND_OPT_KNAPSACK_MIN_CHANGE, FUND_OPT_LONG_TERM_FEE_RATE, WITNESS_STACK_TYPE_NORMAL,
 };
 
 // fund option
@@ -1033,6 +1033,40 @@ impl Transaction {
       txin_list: self.txin_list.clone(),
       txout_list: self.txout_list.clone(),
       txin_utxo_list: utxos,
+    })
+  }
+
+  /// Update txin sequence.
+  ///
+  /// # Arguments
+  /// * `outpoint` - An outpoint.
+  /// * `sequence` - A sequence number.
+  ///
+  /// # Example
+  ///
+  /// ```
+  /// use cfd_rust::{OutPoint, Transaction};
+  /// use std::str::FromStr;
+  /// let outpoint = OutPoint::from_str(
+  ///   "2fea883042440d030ca5929814ead927075a8f52fef5f4720fa3cec2e475d916",
+  ///   0).expect("Fail");
+  /// let tx = Transaction::from_str("0200000000010116d975e4c2cea30f72f4f5fe528f5a0727d9ea149892a50c030d44423088ea2f0000000000ffffffff0130f1029500000000160014164e985d0fc92c927a66c0cbaf78e6ea389629d5014161f75636003a870b7a1685abae84eedf8c9527227ac70183c376f7b3a35b07ebcbea14749e58ce1a87565b035b2f3963baa5ae3ede95e89fd607ab7849f208720200000000").expect("Fail");
+  /// let tx2 = tx.update_txin_sequence(&outpoint, 0xfffffffe).expect("Fail");
+  /// ```
+  pub fn update_txin_sequence(
+    &self,
+    outpoint: &OutPoint,
+    sequence: u32,
+  ) -> Result<Transaction, CfdError> {
+    let mut ope = TransactionOperation::new(&Network::Mainnet);
+    let tx = ope.update_txin_sequence(&hex_from_bytes(&self.tx), outpoint, sequence)?;
+    let data = ope.get_last_tx_data();
+    Ok(Transaction {
+      tx,
+      data: data.clone(),
+      txin_list: ope.get_txin_list_cache().to_vec(),
+      txout_list: self.txout_list.clone(),
+      txin_utxo_list: self.txin_utxo_list.clone(),
     })
   }
 
@@ -2439,6 +2473,66 @@ impl TransactionOperation {
     txout_list: &[TxOutData],
   ) -> Result<Vec<u8>, CfdError> {
     self.create_tx(0, 0, tx, txin_list, txout_list)
+  }
+
+  pub fn update_txin_sequence(
+    &mut self,
+    tx: &str,
+    outpoint: &OutPoint,
+    sequence: u32,
+  ) -> Result<Vec<u8>, CfdError> {
+    let mut handle = ErrorHandle::new()?;
+    let result = {
+      let tx_handle = TxDataHandle::new(&handle, &self.network, tx)?;
+      let tx_result = {
+        TransactionOperation::update_txin_sequence_internal(
+          &CreateTxData::default(),
+          &handle,
+          &tx_handle,
+          outpoint,
+          sequence,
+        )?;
+        self.get_txin_by_outpoint_internal(&handle, &tx_handle, &String::default(), outpoint)?;
+        self.get_tx_internal(&handle, &tx_handle, &String::default())
+      }?;
+      tx_handle.free_handle(&handle);
+      tx_result
+    };
+    handle.free_handle();
+    Ok(result)
+  }
+
+  pub fn update_txin_sequence_internal(
+    tx: &CreateTxData,
+    handle: &ErrorHandle,
+    tx_handle: &TxDataHandle,
+    outpoint: &OutPoint,
+    sequence: u32,
+  ) -> Result<(), CfdError> {
+    let tx_data_handle = match tx_handle.is_null() {
+      false => tx_handle.clone(),
+      _ => TxDataHandle::new(&handle, &tx.network, &tx.tx)?,
+    };
+    let result = {
+      let txid = alloc_c_string(&outpoint.txid.to_hex())?;
+      let error_code = unsafe {
+        CfdUpdateTxInSequence(
+          handle.as_handle(),
+          tx_data_handle.as_handle(),
+          txid.as_ptr(),
+          outpoint.get_vout(),
+          sequence,
+        )
+      };
+      match error_code {
+        0 => Ok(()),
+        _ => Err(handle.get_error(error_code)),
+      }
+    };
+    if tx_handle.is_null() {
+      tx_data_handle.free_handle(&handle);
+    }
+    result
   }
 
   pub fn update_witness_stack(
