@@ -866,12 +866,12 @@ mod elements_tests {
     let verify = pubkey
       .verify_ec_signature(&sighash, sig.to_slice())
       .expect("Fail");
-    assert_eq!(true, verify);
+    assert!(verify);
 
     let is_verify = tx
       .verify_signature_by_pubkey(&outpoint, desc.get_hash_type(), &pubkey, &signature, &value)
       .expect("Fail");
-    assert_eq!(true, is_verify);
+    assert!(is_verify);
   }
 
   #[test]
@@ -961,7 +961,7 @@ mod elements_tests {
         &value,
       )
       .expect("Fail");
-    assert_eq!(true, is_verify);
+    assert!(is_verify);
   }
 
   #[test]
@@ -1015,7 +1015,7 @@ mod elements_tests {
         &BlindFactor::from_str("62e36e1f0fa4916b031648a6b6903083069fa587572a88b729250cde528cfd3b")
           .expect("Fail"),
       )
-      .set_option_info(true, true, false, 0, &Script::default()),
+      .set_option_info(true, true, false, &Script::default(), 0, 0),
     ];
 
     // estimate fee on blind tx
@@ -1135,7 +1135,7 @@ mod elements_tests {
         &BlindFactor::from_str("62e36e1f0fa4916b031648a6b6903083069fa587572a88b729250cde528cfd3b")
           .expect("Fail"),
       )
-      .set_option_info(true, true, false, 0, &Script::default());
+      .set_option_info(true, true, false, &Script::default(), 0, 0);
     let out_addr1 = Address::from_str("2djHX9wtrtdyGw9cer1u6zB6Yq4SRD8V5zw").expect("Fail");
     let out_addr2 = Address::from_str("2dodsWJgP3pTWWidK5hDxuYHqC1U4CEnT3n").expect("Fail");
     let mut tx = ConfidentialTransaction::create_tx(

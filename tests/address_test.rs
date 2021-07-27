@@ -9,7 +9,7 @@ mod tests {
   fn address_test() {
     // default
     let empty_addr = Address::default();
-    assert_eq!(false, empty_addr.valid());
+    assert!(!empty_addr.valid());
     // default: bitcoin
     let pubkey =
       Pubkey::from_str("036b67e1bd3bd3efbc37fdc738ab159a4aa527057eae12a0c4b07d3132580dcdfd")
@@ -83,7 +83,7 @@ mod tests {
       "a91405bc4d5d12925f008cef06ba387ade16a49d7a3187",
       p2sh_addr.get_locking_script().to_hex()
     );
-    assert_eq!(true, p2sh_addr.valid());
+    assert!(p2sh_addr.valid());
 
     // get_multisig_addresses
     let multisig_script = Script::from_hex("522102522952c3fc2a53a8651b08ce10988b7506a3b40a5c26f9648a911be33e73e1a0210340b52ae45bc1be5de083f1730fe537374e219c4836400623741d2a874e60590c21024a3477bc8b933a320eb5667ee72c35a81aa155c8e20cc51c65fb666de3a43b8253ae").expect("fail");

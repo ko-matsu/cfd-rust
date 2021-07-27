@@ -181,7 +181,7 @@ mod tests {
     let verify_sig = tx
       .verify_signature_by_pubkey(&outpoint1, &HashType::P2wpkh, &pubkey1, &signature, &amount)
       .expect("Fail");
-    assert_eq!(true, verify_sig);
+    assert!(verify_sig);
   }
 
   #[test]
@@ -279,9 +279,8 @@ mod tests {
         .expect("Fail")
     );
 
-    assert_eq!(true, outpoint2.eq(&tx.get_txin_list()[1].outpoint));
-    assert_eq!(
-      true,
+    assert!(outpoint2.eq(&tx.get_txin_list()[1].outpoint));
+    assert!(
       addr2
         .get_locking_script()
         .eq(&tx.get_txout_list()[1].locking_script)
@@ -477,7 +476,7 @@ mod tests {
         &amount,
       )
       .expect("Fail");
-    assert_eq!(true, is_verify);
+    assert!(is_verify);
   }
 
   #[test]
@@ -560,7 +559,7 @@ mod tests {
         &Amount::default(),
       )
       .expect("Fail");
-    assert_eq!(true, verify);
+    assert!(verify);
   }
 
   #[test]
@@ -908,7 +907,7 @@ mod tests {
     let mut fee_param = FeeOption::new(&network);
     fee_param.fee_rate = 20.0;
     let selected_list = Transaction::select_coins(&utxos, 0, 0, &fee_param).expect("Fail");
-    assert_eq!(true, selected_list.select_utxo_list.is_empty());
+    assert!(selected_list.select_utxo_list.is_empty());
     assert_eq!(0, selected_list.utxo_fee_amount);
   }
 
@@ -1160,7 +1159,7 @@ mod tests {
     let is_verify = util
       .verify(&signature, &sighash_bytes, &pubkey)
       .expect("Fail");
-    assert_eq!(true, is_verify);
+    assert!(is_verify);
   }
 
   #[test]
@@ -1324,7 +1323,7 @@ mod tests {
     let is_verify = util
       .verify(&signature, &sighash_bytes, &pubkey)
       .expect("Fail");
-    assert_eq!(true, is_verify);
+    assert!(is_verify);
   }
 
   #[test]

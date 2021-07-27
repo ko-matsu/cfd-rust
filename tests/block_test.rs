@@ -47,10 +47,9 @@ mod tests {
       "00000030957958949bad814d1666ed0d4a005c8aed6b7fd56df5d12c81d584c71e5fae2dfe391f9150dcfb06d54d4eb6621672590bf46bed6893da825c076b841794cec5414e2660ffff7f20000000000100000001fe391f9150dcfb06d54d4eb6621672590bf46bed6893da825c076b841794cec50101",
       proof.to_hex());
 
-    assert_eq!(true, block.exist_txid(&txid));
-    assert_eq!(
-      false,
-      block.exist_txid(
+    assert!(block.exist_txid(&txid));
+    assert!(
+      !block.exist_txid(
         &Txid::from_str("f5ce9417846b075c82da9368ed6bf40b59721662b64e4dd506fbdc50911f39fe")
           .expect("Fail")
       )
@@ -126,10 +125,9 @@ mod tests {
       "00000020d987e1f7cc030f4272beda5a081f8f8969f044ef72a3b2c2e544afc8230b9642d8b5de43b746fa65aaab7cfa0b521b41e4eb0d7c0e2fb834380259df581daf03157eb360ffff7f20010000001500000006774b1a7f9e060f94a1c7bd9d8109e233014e4e74a09a5b85a42add1837c18de15ff9ce854a8eb01ed191f6862ef29c6760a92b74a00f7409c773bd1594203fcb7dbc3341755bc377b264294f4dbe2125db0019bf78092d9d95458147473ebef40b484381159b8168441d718d2855f98b076d7f319e08fc129fc6684a10364d6cab62141fa7cf9455e1db2b83d9746dcb4151f71cbde29b8074d9c280cf2329858c705d27704a43f47e3a3066b9253a3d7380cb20874e67178450d2ab376f06ee027b00",
       proof.to_hex());
 
-    assert_eq!(true, block.exist_txid(&txid));
-    assert_eq!(
-      false,
-      block.exist_txid(
+    assert!(block.exist_txid(&txid));
+    assert!(
+      !block.exist_txid(
         &Txid::from_str("f5ce9417846b075c82da9368ed6bf40b59721662b64e4dd506fbdc50911f39fe")
           .expect("Fail")
       )
