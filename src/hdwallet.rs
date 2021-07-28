@@ -15,7 +15,7 @@ use std::str::FromStr;
 use self::cfd_sys::{
   CfdConvertEntropyToMnemonic, CfdConvertMnemonicToSeed, CfdCreateExtPubkey, CfdCreateExtkey,
   CfdCreateExtkeyFromParent, CfdCreateExtkeyFromParentPath, CfdCreateExtkeyFromSeed,
-  CfdFreeMnemonicWordList, CfdGetExtkeyInformation, CfdGetMnemonicWord, CfdGetPrivkeyFromExtkey,
+  CfdFreeMnemonicWordList, CfdGetExtkeyInfo, CfdGetMnemonicWord, CfdGetPrivkeyFromExtkey,
   CfdGetPubkeyFromExtkey, CfdInitializeMnemonicWordList,
 };
 
@@ -36,10 +36,18 @@ pub(in crate) enum ExtKeyType {
 }
 
 impl ExtKeyType {
-  pub fn to_c_value(&self) -> c_int {
+  pub fn to_c_value(self) -> c_int {
     match self {
       ExtKeyType::Privkey => 0,
       ExtKeyType::Pubkey => 1,
+    }
+  }
+
+  pub fn from_c_value(key_type: c_int) -> Result<ExtKeyType, CfdError> {
+    match key_type {
+      0 => Ok(ExtKeyType::Privkey),
+      1 => Ok(ExtKeyType::Pubkey),
+      _ => Err(CfdError::IllegalArgument("Invalid extkeytype".to_string())),
     }
   }
 }
@@ -115,7 +123,7 @@ fn generate_privkey(extkey: &str, network_type: Network) -> Result<Privkey, CfdE
 }
 
 impl ExtKey {
-  fn from_extkey(extkey: &str) -> Result<ExtKey, CfdError> {
+  fn from_extkey(extkey: &str) -> Result<(ExtKey, ExtKeyType), CfdError> {
     let extkey_str = alloc_c_string(extkey)?;
     let mut handle = ErrorHandle::new()?;
     let mut version: *mut c_char = ptr::null_mut();
@@ -123,8 +131,10 @@ impl ExtKey {
     let mut chain_code: *mut c_char = ptr::null_mut();
     let mut depth: c_uint = 0;
     let mut child_number: c_uint = 0;
+    let mut key_type: c_int = 0;
+    let mut network_type: c_int = 0;
     let error_code = unsafe {
-      CfdGetExtkeyInformation(
+      CfdGetExtkeyInfo(
         handle.as_handle(),
         extkey_str.as_ptr(),
         &mut version,
@@ -132,6 +142,8 @@ impl ExtKey {
         &mut chain_code,
         &mut depth,
         &mut child_number,
+        &mut key_type,
+        &mut network_type,
       )
     };
     let result = match error_code {
@@ -144,16 +156,9 @@ impl ExtKey {
         let version_byte = byte_from_hex_unsafe(version_str);
         let fingerprint_byte = byte_from_hex_unsafe(fingerprint_obj);
         let chain_code_byte = byte_from_hex_unsafe(chain_code_obj);
-        let net_type = match &version_str as &str {
-          XPRIV_MAINNET_VERSION => Ok(Network::Mainnet),
-          XPRIV_TESTNET_VERSION => Ok(Network::Testnet),
-          XPUB_MAINNET_VERSION => Ok(Network::Mainnet),
-          XPUB_TESTNET_VERSION => Ok(Network::Testnet),
-          _ => Err(CfdError::IllegalArgument(
-            "unsupported version.".to_string(),
-          )),
-        }?;
-        Ok(ExtKey {
+        let net_type = Network::from_c_value(network_type);
+        let extkey_type = ExtKeyType::from_c_value(key_type)?;
+        Ok((ExtKey {
           extkey: extkey.to_string(),
           version: ByteData::from_slice(&version_byte),
           fingerprint: ByteData::from_slice(&fingerprint_byte),
@@ -161,7 +166,7 @@ impl ExtKey {
           depth: depth as u8,
           child_number,
           network_type: net_type,
-        })
+        }, extkey_type))
       }
       _ => Err(handle.get_error(error_code)),
     };
@@ -192,7 +197,8 @@ impl ExtKey {
     let result = match error_code {
       0 => {
         let extkey_obj = unsafe { collect_cstring_and_free(extkey_hex) }?;
-        ExtKey::from_extkey(&extkey_obj)
+        let (extkey, _ ) = ExtKey::from_extkey(&extkey_obj)?;
+        Ok(extkey)
       }
       _ => Err(handle.get_error(error_code)),
     };
@@ -237,7 +243,8 @@ impl ExtKey {
     let result = match error_code {
       0 => {
         let extkey_obj = unsafe { collect_cstring_and_free(extkey_hex) }?;
-        ExtKey::from_extkey(&extkey_obj)
+        let (extkey, _ ) = ExtKey::from_extkey(&extkey_obj)?;
+        Ok(extkey)
       }
       _ => Err(handle.get_error(error_code)),
     };
@@ -359,11 +366,11 @@ impl ExtPrivkey {
   /// let extkey = ExtPrivkey::new(key).expect("Fail");
   /// ```
   pub fn new(extkey: &str) -> Result<ExtPrivkey, CfdError> {
-    let extkey_ret = ExtKey::from_extkey(extkey);
-    if let Err(ret) = extkey_ret {
-      return Err(ret);
+    let (extkey_ret, key_type) = ExtKey::from_extkey(extkey)?;
+    if key_type != ExtKeyType::Privkey {
+      return Err(CfdError::IllegalArgument("Invalid key type".to_string()));
     }
-    ExtPrivkey::from_key(extkey_ret.unwrap())
+    ExtPrivkey::from_key(extkey_ret)
   }
 
   fn from_key(extkey: ExtKey) -> Result<ExtPrivkey, CfdError> {
@@ -626,7 +633,10 @@ impl ExtPubkey {
   /// let extkey = ExtPubkey::new(key).expect("Fail");
   /// ```
   pub fn new(extkey: &str) -> Result<ExtPubkey, CfdError> {
-    let extkey_ret = ExtKey::from_extkey(extkey)?;
+    let (extkey_ret, key_type) = ExtKey::from_extkey(extkey)?;
+    if key_type != ExtKeyType::Pubkey {
+      return Err(CfdError::IllegalArgument("Invalid key type".to_string()));
+    }
     ExtPubkey::from_key(extkey_ret)
   }
 
