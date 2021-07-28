@@ -30,7 +30,7 @@ use self::cfd_sys::{
   CfdAddBlindTxInData, CfdAddBlindTxOutByAddress, CfdAddBlindTxOutData, CfdAddCoinSelectionAmount,
   CfdAddCoinSelectionUtxoTemplate, CfdAddConfidentialTxOutput,
   CfdAddConfidentialTxSignWithPrivkeySimple, CfdAddTargetAmountForFundRawTx,
-  CfdAddTransactionInput, CfdAddTxInTemplateForEstimateFee, CfdAddTxInTemplateForFundRawTx,
+  CfdAddTransactionInput, CfdAddTxInputForEstimateFee, CfdAddTxInputForFundRawTx,
   CfdAddTxPeginInput, CfdAddTxPegoutOutput, CfdAddUtxoTemplateForFundRawTx,
   CfdCreateConfidentialSighash, CfdFinalizeBlindTx, CfdFinalizeCoinSelection,
   CfdFinalizeEstimateFee, CfdFinalizeFundRawTx, CfdFinalizeTransaction, CfdFreeBlindHandle,
@@ -43,6 +43,7 @@ use self::cfd_sys::{
   CfdInitializeCoinSelection, CfdInitializeEstimateFee, CfdInitializeFundRawTx,
   CfdInitializeTransaction, CfdSetBlindTxOption, CfdSetIssueAsset, CfdSetOptionCoinSelection,
   CfdSetOptionEstimateFee, CfdSetReissueAsset, CfdUnblindIssuance, CfdUnblindTxOut,
+  CfdUnblindTxOutData,
   CfdUpdateTxOutAmount, BLIND_OPT_COLLECT_BLINDER, BLIND_OPT_EXPONENT, BLIND_OPT_MINIMUM_BITS,
   BLIND_OPT_MINIMUM_RANGE_VALUE, COIN_OPT_BLIND_EXPONENT, COIN_OPT_BLIND_MINIMUM_BITS,
   DEFAULT_BLIND_MINIMUM_BITS, FEE_OPT_BLIND_EXPONENT, FEE_OPT_BLIND_MINIMUM_BITS,
@@ -946,8 +947,9 @@ pub struct ElementsUtxoOptionData {
   pub is_issuance: bool,
   pub is_blind_issuance: bool,
   pub is_pegin: bool,
+  pub claim_script: Script,
   pub pegin_btc_tx_size: u32,
-  pub fedpeg_script: Script,
+  pub pegin_txoutproof_size: u32,
 }
 
 impl fmt::Display for ElementsUtxoOptionData {
@@ -962,8 +964,9 @@ impl Default for ElementsUtxoOptionData {
       is_issuance: false,
       is_blind_issuance: true,
       is_pegin: false,
+      claim_script: Script::default(),
       pegin_btc_tx_size: 0,
-      fedpeg_script: Script::default(),
+      pegin_txoutproof_size: 0,
     }
   }
 }
@@ -1153,15 +1156,17 @@ impl ElementsUtxoData {
     is_issuance: bool,
     is_blind_issuance: bool,
     is_pegin: bool,
+    claim_script: &Script,
     pegin_btc_tx_size: u32,
-    fedpeg_script: &Script,
+    pegin_txoutproof_size: u32,
   ) -> ElementsUtxoData {
     let option = ElementsUtxoOptionData {
       is_issuance,
       is_blind_issuance,
       is_pegin,
+      claim_script: claim_script.clone(),
       pegin_btc_tx_size,
-      fedpeg_script: fedpeg_script.clone(),
+      pegin_txoutproof_size,
     };
     self.option = option;
     self
@@ -1633,6 +1638,52 @@ pub struct ConfidentialTxOut {
 }
 
 impl ConfidentialTxOut {
+  pub fn unblind(blinding_key: &Privkey, locking_script: &Script,
+      asset_commitment: &ConfidentialAsset, value_commitment: &ConfidentialValue,
+      nonce: &ConfidentialNonce, rangeproof: &ByteData,
+    ) -> Result<UnblindData, CfdError> {
+    let mut handle = ErrorHandle::new()?;
+    let key_hex = alloc_c_string(&blinding_key.to_hex())?;
+    let script_hex = alloc_c_string(&locking_script.to_hex())?;
+    let asset_hex = alloc_c_string(&asset_commitment.to_hex())?;
+    let value_hex = alloc_c_string(&value_commitment.as_str())?;
+    let nonce_hex = alloc_c_string(&nonce.to_hex())?;
+    let rangeproof_hex = alloc_c_string(&rangeproof.to_hex())?;
+    let mut amount: c_longlong = 0;
+    let mut asset: *mut c_char = ptr::null_mut();
+    let mut asset_blind_factor: *mut c_char = ptr::null_mut();
+    let mut value_blind_factor: *mut c_char = ptr::null_mut();
+    let error_code = unsafe {
+      CfdUnblindTxOutData(
+        handle.as_handle(),
+        key_hex.as_ptr(),
+        script_hex.as_ptr(),
+        asset_hex.as_ptr(),
+        value_hex.as_ptr(),
+        nonce_hex.as_ptr(),
+        rangeproof_hex.as_ptr(),
+        &mut asset,
+        &mut amount,
+        &mut asset_blind_factor,
+        &mut value_blind_factor,
+      )
+    };
+    let result = match error_code {
+      0 => {
+        let str_list = unsafe { collect_multi_cstring_and_free(&[asset, asset_blind_factor, value_blind_factor]) }?;
+        Ok(UnblindData{
+          asset: ConfidentialAsset::from_str(&str_list[0])?,
+          amount: ConfidentialValue::from_amount(amount)?,
+          asset_blind_factor: BlindFactor::from_str(&str_list[1])?,
+          amount_blind_factor: BlindFactor::from_str(&str_list[2])?,
+        })
+      }
+      _ => Err(handle.get_error(error_code)),
+    };
+    handle.free_handle();
+    result
+  }
+
   pub fn from_data_list(list: &[ConfidentialTxOutData]) -> Vec<ConfidentialTxOut> {
     let mut output: Vec<ConfidentialTxOut> = vec![];
     output.reserve(list.len());
@@ -4397,9 +4448,9 @@ impl ConfidentialTxOperation {
               let descriptor = alloc_c_string(&txin_data.utxo.descriptor.to_str())?;
               let sig_tmpl = alloc_c_string(&txin_data.utxo.scriptsig_template.to_hex())?;
               let asset = alloc_c_string(&txin_data.asset.get_unblind_asset()?)?;
-              let fedpeg_script = alloc_c_string(&txin_data.option.fedpeg_script.to_hex())?;
+              let claim_script = alloc_c_string(&txin_data.option.claim_script.to_hex())?;
               let error_code = unsafe {
-                CfdAddTxInTemplateForEstimateFee(
+                CfdAddTxInputForEstimateFee(
                   handle.as_handle(),
                   fee_handle,
                   txid.as_ptr(),
@@ -4409,8 +4460,9 @@ impl ConfidentialTxOperation {
                   txin_data.option.is_issuance,
                   txin_data.option.is_blind_issuance,
                   txin_data.option.is_pegin,
+                  claim_script.as_ptr(),
                   txin_data.option.pegin_btc_tx_size,
-                  fedpeg_script.as_ptr(),
+                  txin_data.option.pegin_btc_tx_size,
                   sig_tmpl.as_ptr(),
                 )
               };
@@ -4663,9 +4715,9 @@ impl ConfidentialTxOperation {
               let descriptor = alloc_c_string(&txin_data.utxo.descriptor.to_str())?;
               let sig_tmpl = alloc_c_string(&txin_data.utxo.scriptsig_template.to_hex())?;
               let asset = alloc_c_string(&txin_data.asset.get_unblind_asset()?)?;
-              let fedpeg_script = alloc_c_string(&txin_data.option.fedpeg_script.to_hex())?;
+              let claim_script = alloc_c_string(&txin_data.option.claim_script.to_hex())?;
               let error_code = unsafe {
-                CfdAddTxInTemplateForFundRawTx(
+                CfdAddTxInputForFundRawTx(
                   handle.as_handle(),
                   fund_handle,
                   txid.as_ptr(),
@@ -4676,8 +4728,9 @@ impl ConfidentialTxOperation {
                   txin_data.option.is_issuance,
                   txin_data.option.is_blind_issuance,
                   txin_data.option.is_pegin,
+                  claim_script.as_ptr(),
                   txin_data.option.pegin_btc_tx_size,
-                  fedpeg_script.as_ptr(),
+                  txin_data.option.pegin_txoutproof_size,
                   sig_tmpl.as_ptr(),
                 )
               };
