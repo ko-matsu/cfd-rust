@@ -52,7 +52,7 @@ impl HashType {
     }
   }
 
-  pub(in crate) fn to_c_value(&self) -> c_int {
+  pub(in crate) fn to_c_value(self) -> c_int {
     match self {
       HashType::P2sh => 1,
       HashType::P2pkh => 2,
@@ -140,7 +140,7 @@ pub enum AddressType {
 }
 
 impl AddressType {
-  pub(in crate) fn to_c_value(&self) -> c_int {
+  pub(in crate) fn to_c_value(self) -> c_int {
     match self {
       AddressType::P2shAddress => 1,
       AddressType::P2pkhAddress => 2,
@@ -153,7 +153,7 @@ impl AddressType {
     }
   }
 
-  pub(in crate) fn to_c_hash_type(&self) -> c_int {
+  pub(in crate) fn to_c_hash_type(self) -> c_int {
     self.to_c_value()
   }
 
@@ -882,8 +882,8 @@ impl Address {
                   let str_list = unsafe { collect_multi_cstring_and_free(&[address, pubkey]) }?;
                   let addr_obj = &str_list[0];
                   let pubkey_obj = &str_list[1];
-                  let address = Address::from_string(&addr_obj)?;
-                  let pubkey = Pubkey::from_str(&pubkey_obj)?;
+                  let address = Address::from_string(addr_obj)?;
+                  let pubkey = Pubkey::from_str(pubkey_obj)?;
                   Ok(MultisigItem { address, pubkey })
                 }
                 _ => Err(handle.get_error(error_code)),
@@ -1025,9 +1025,9 @@ impl Address {
         let claim_script_obj = &str_list[1];
         let fedpeg_script_obj = &str_list[2];
         Ok((
-          Address::from_string(&addr_str)?,
-          Script::from_hex(&claim_script_obj)?,
-          Script::from_hex(&fedpeg_script_obj)?,
+          Address::from_string(addr_str)?,
+          Script::from_hex(claim_script_obj)?,
+          Script::from_hex(fedpeg_script_obj)?,
         ))
       }
       _ => Err(handle.get_error(error_code)),

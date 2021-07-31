@@ -105,7 +105,7 @@ mod tests {
         .expect("Fail")
         .to_32byte_array(),
     ];
-    let tree2 = TapBranch::from_string_by_tapscript(&tree_str, &script_op_true, &control_nodes)
+    let tree2 = TapBranch::from_string_by_tapscript(tree_str, &script_op_true, &control_nodes)
       .expect("Fail");
     assert_eq!(5, tree2.get_branch_count().expect("Fail"));
     assert_eq!(tree_str, tree2.to_str());
@@ -124,8 +124,8 @@ mod tests {
     let empty_nodes: Vec<[u8; 32]> = vec![];
     let mut tree3 = TapBranch::from_string_by_tapscript(
       "{{tl(20ac52f50b28cdd4d3bcb7f0d5cb533f232e4c4ef12fbf3e718420b84d4e3c3440ac),{tl(2057bf643684f6c5c75e1cdf45990036502a0d897394013210858cdabcbb95a05aac),tl(51)}},tl(2057bf643684f6c5c75e1cdf45990036502a0d897394013210858cdabcbb95a05aad205bec1a08fa3443176edd0a08e2a64642f45e57543b62bffe43ec350edc33dc22ac)}",
-      &&script_op_true,
-      &&empty_nodes,
+      &script_op_true,
+      &empty_nodes,
     ).expect("Fail");
     tree3.add_by_tapbranch(&branch).expect("Fail");
     tree3.add_by_tree_string("tl(2008f8280d68e02e807ccffee141c4a6b7ac31d3c283ae0921892d95f691742c44ad20b0f8ce3e1df406514a773414b5d9e5779d8e68ce816e9db39b8e53255ac3b406ac)").expect("Fail");

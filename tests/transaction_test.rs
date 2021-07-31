@@ -188,7 +188,7 @@ mod tests {
   fn get_tx_info_test() {
     let privkey = ExtPrivkey::new("xprv9zt1onyw8BdEf7SQ6wUVH3bQQdGD9iy9QzXveQQRhX7i5iUN7jZgLbqFEe491LfjozztYa6bJAGZ65GmDCNcbjMdjZcgmdisPJwVjcfcDhV").expect("Fail");
     let addr1 = Address::p2wpkh(
-      &privkey
+      privkey
         .derive_pubkey_from_number(1, false)
         .expect("Fail")
         .get_pubkey(),
@@ -196,7 +196,7 @@ mod tests {
     )
     .expect("Fail");
     let addr2 = Address::p2wpkh(
-      &privkey
+      privkey
         .derive_pubkey_from_number(2, false)
         .expect("Fail")
         .get_pubkey(),
@@ -204,7 +204,7 @@ mod tests {
     )
     .expect("Fail");
     let addr3 = Address::p2wpkh(
-      &privkey
+      privkey
         .derive_pubkey_from_number(3, false)
         .expect("Fail")
         .get_pubkey(),
@@ -275,7 +275,7 @@ mod tests {
     assert_eq!(2, tx.get_txout_index_by_address(&addr3).expect("Fail"));
     assert_eq!(
       1,
-      tx.get_txout_index_by_script(&addr2.get_locking_script())
+      tx.get_txout_index_by_script(addr2.get_locking_script())
         .expect("Fail")
     );
 
@@ -402,7 +402,7 @@ mod tests {
     let tx_ret3 = tx.sign_with_privkey(
       &outpoint1,
       &HashType::P2wpkh,
-      &privkey1,
+      privkey1,
       &sighash_type,
       &amount,
     );
@@ -569,12 +569,12 @@ mod tests {
     let utxos = get_bitcoin_bnb_utxo_list(&Network::Mainnet);
     let key = ExtPubkey::new("xpub661MyMwAqRbcGB88KaFbLGiYAat55APKhtWg4uYMkXAmfuSTbq2QYsn9sKJCj1YqZPafsboef4h4YbXXhNhPwMbkHTpkf3zLhx7HvFw1NDy").expect("Fail");
     let set_addr1 = Address::p2wpkh(
-      &key.derive_from_number(11).expect("Fail").get_pubkey(),
+      key.derive_from_number(11).expect("Fail").get_pubkey(),
       &network,
     )
     .expect("Fail");
     let set_addr2 = Address::p2wpkh(
-      &key.derive_from_number(12).expect("Fail").get_pubkey(),
+      key.derive_from_number(12).expect("Fail").get_pubkey(),
       &network,
     )
     .expect("Fail");
@@ -611,12 +611,12 @@ mod tests {
     let utxos = get_bitcoin_bnb_utxo_list(&Network::Mainnet);
     let key = ExtPubkey::new("xpub661MyMwAqRbcGB88KaFbLGiYAat55APKhtWg4uYMkXAmfuSTbq2QYsn9sKJCj1YqZPafsboef4h4YbXXhNhPwMbkHTpkf3zLhx7HvFw1NDy").expect("Fail");
     let set_addr1 = Address::p2wpkh(
-      &key.derive_from_number(11).expect("Fail").get_pubkey(),
+      key.derive_from_number(11).expect("Fail").get_pubkey(),
       &network,
     )
     .expect("Fail");
     let set_addr2 = Address::p2wpkh(
-      &key.derive_from_number(12).expect("Fail").get_pubkey(),
+      key.derive_from_number(12).expect("Fail").get_pubkey(),
       &network,
     )
     .expect("Fail");
@@ -633,7 +633,7 @@ mod tests {
     .expect("Fail");
 
     let addr1 = Address::p2wpkh(
-      &key.derive_from_number(1).expect("Fail").get_pubkey(),
+      key.derive_from_number(1).expect("Fail").get_pubkey(),
       &network,
     )
     .expect("Fail");
@@ -657,12 +657,12 @@ mod tests {
     let utxos = get_bitcoin_bnb_utxo_list(&Network::Mainnet);
     let key = ExtPubkey::new("xpub661MyMwAqRbcGB88KaFbLGiYAat55APKhtWg4uYMkXAmfuSTbq2QYsn9sKJCj1YqZPafsboef4h4YbXXhNhPwMbkHTpkf3zLhx7HvFw1NDy").expect("Fail");
     let set_addr1 = Address::p2wpkh(
-      &key.derive_from_number(11).expect("Fail").get_pubkey(),
+      key.derive_from_number(11).expect("Fail").get_pubkey(),
       &network,
     )
     .expect("Fail");
     let set_addr2 = Address::p2wpkh(
-      &key.derive_from_number(12).expect("Fail").get_pubkey(),
+      key.derive_from_number(12).expect("Fail").get_pubkey(),
       &network,
     )
     .expect("Fail");
@@ -686,7 +686,7 @@ mod tests {
 
     let input_utxos = [utxos[1].clone(), utxos[2].clone()];
     let addr1 = Address::p2wpkh(
-      &key.derive_from_number(1).expect("Fail").get_pubkey(),
+      key.derive_from_number(1).expect("Fail").get_pubkey(),
       &network,
     )
     .expect("Fail");
@@ -727,12 +727,12 @@ mod tests {
     let utxos = get_bitcoin_bnb_utxo_list(&network);
     let key = ExtPubkey::new("xpub661MyMwAqRbcGB88KaFbLGiYAat55APKhtWg4uYMkXAmfuSTbq2QYsn9sKJCj1YqZPafsboef4h4YbXXhNhPwMbkHTpkf3zLhx7HvFw1NDy").expect("Fail");
     let set_addr1 = Address::p2wpkh(
-      &key.derive_from_number(11).expect("Fail").get_pubkey(),
+      key.derive_from_number(11).expect("Fail").get_pubkey(),
       &network,
     )
     .expect("Fail");
     let set_addr2 = Address::p2wpkh(
-      &key.derive_from_number(12).expect("Fail").get_pubkey(),
+      key.derive_from_number(12).expect("Fail").get_pubkey(),
       &network,
     )
     .expect("Fail");
@@ -749,7 +749,7 @@ mod tests {
     .expect("Fail");
 
     let addr1 = Address::p2wpkh(
-      &key.derive_from_number(1).expect("Fail").get_pubkey(),
+      key.derive_from_number(1).expect("Fail").get_pubkey(),
       &network,
     )
     .expect("Fail");
@@ -769,7 +769,7 @@ mod tests {
 
   fn get_bitcoin_bnb_utxo_list(network: &Network) -> Vec<UtxoData> {
     let desc = "sh(wpkh([ef735203/0'/0'/7']022c2409fbf657ba25d97bb3dab5426d20677b774d4fc7bd3bfac27ff96ada3dd1))#4z2vy08x";
-    let descriptor = Descriptor::new(desc, &network).expect("Fail");
+    let descriptor = Descriptor::new(desc, network).expect("Fail");
     vec![
       UtxoData::from_descriptor(
         &OutPoint::from_str(
@@ -832,7 +832,7 @@ mod tests {
     let network = &Network::Mainnet;
     let desc =
       "wpkh([ef735203/0'/0'/7']022c2409fbf657ba25d97bb3dab5426d20677b774d4fc7bd3bfac27ff96ada3dd1)";
-    let descriptor = Descriptor::new(desc, &network).expect("Fail");
+    let descriptor = Descriptor::new(desc, network).expect("Fail");
     vec![
       UtxoData::from_descriptor(
         &OutPoint::from_str(
@@ -1308,7 +1308,7 @@ mod tests {
     assert_eq!("f5aa6b260f9df687786cd3813ba83b476e195041bccea800f2571212f4aae9848a538b6175a4f8ea291d38e351ea7f612a3d700dca63cd3aff05d315c5698ee9", sig.to_hex());
 
     tx = tx
-      .add_tapscript_sign(&outpoint, &[sig], &&script_checksig, &control_block, &annex)
+      .add_tapscript_sign(&outpoint, &[sig], &script_checksig, &control_block, &annex)
       .expect("Fail");
     assert_eq!("020000000001015b80a1af0e00c700bee9c8e4442bec933fcdc0c686dac2dc336caaaf186c5d190000000000ffffffff0130f1029500000000160014164e985d0fc92c927a66c0cbaf78e6ea389629d50341f5aa6b260f9df687786cd3813ba83b476e195041bccea800f2571212f4aae9848a538b6175a4f8ea291d38e351ea7f612a3d700dca63cd3aff05d315c5698ee90122201777701648fa4dd93c74edd9d58cfcc7bdc2fa30a2f6fa908b6fd70c92833cfbac61c01777701648fa4dd93c74edd9d58cfcc7bdc2fa30a2f6fa908b6fd70c92833cfb4d18084bb47027f47d428b2ed67e1ccace5520fdc36f308e272394e288d53b6ddc82121e4ff8d23745f3859e8939ecb0a38af63e6ddea2fff97a7fd61a1d2d5400000000", tx.to_str());
 

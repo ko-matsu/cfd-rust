@@ -68,7 +68,7 @@ impl Block {
   /// * `data` - An unsigned 8bit slice that holds the byte data.
   #[inline]
   pub fn from_data(data: &ByteData) -> Result<Block, CfdError> {
-    Block::from_slice(&data.to_slice())
+    Block::from_slice(data.to_slice())
   }
 
   #[inline]

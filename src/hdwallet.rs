@@ -216,7 +216,7 @@ impl ExtKey {
     }
     let mut temp_extkey = self.clone();
     for child_number in number_list {
-      temp_extkey = temp_extkey.derive_from_number(*child_number, false, &key_type)?;
+      temp_extkey = temp_extkey.derive_from_number(*child_number, false, key_type)?;
     }
     Ok(temp_extkey)
   }
@@ -454,7 +454,7 @@ impl ExtPrivkey {
   /// let ext_pubkey = extkey.get_ext_pubkey().expect("Fail");
   /// ```
   pub fn get_ext_pubkey(&self) -> Result<ExtPubkey, CfdError> {
-    let extkey_str = alloc_c_string(&self.extkey.to_str())?;
+    let extkey_str = alloc_c_string(self.extkey.to_str())?;
     let mut handle = ErrorHandle::new()?;
     let mut ext_pubkey_hex: *mut c_char = ptr::null_mut();
     let error_code = unsafe {
@@ -940,7 +940,7 @@ pub enum MnemonicLanguage {
 }
 
 impl MnemonicLanguage {
-  pub(in crate) fn to_str(&self) -> String {
+  pub(in crate) fn to_str(self) -> String {
     match self {
       MnemonicLanguage::EN => "en".to_string(),
       MnemonicLanguage::ES => "es".to_string(),
@@ -1055,7 +1055,7 @@ impl HDWallet {
   /// let mnemonic = HDWallet::mnemonic_from_entropy(&entropy, MnemonicLanguage::EN).expect("Fail");
   /// ```
   pub fn mnemonic_from_entropy(entropy: &[u8], lang: MnemonicLanguage) -> Result<String, CfdError> {
-    let entropy_hex = alloc_c_string(&hex_from_bytes(&entropy))?;
+    let entropy_hex = alloc_c_string(&hex_from_bytes(entropy))?;
     let language = alloc_c_string(&lang.to_str())?;
     let mut handle = ErrorHandle::new()?;
     let mut mnemonic: *mut c_char = ptr::null_mut();
@@ -1261,7 +1261,7 @@ impl HDWallet {
     network_type: &Network,
     bip32path: &str,
   ) -> Result<ExtPrivkey, CfdError> {
-    let ext_priv = ExtPrivkey::from_seed(&self.seed, &network_type)?;
+    let ext_priv = ExtPrivkey::from_seed(&self.seed, network_type)?;
     ext_priv.derive_from_path(bip32path)
   }
 
@@ -1286,7 +1286,7 @@ impl HDWallet {
     child_number: u32,
     hardened: bool,
   ) -> Result<ExtPrivkey, CfdError> {
-    let ext_priv = ExtPrivkey::from_seed(&self.seed, &network_type)?;
+    let ext_priv = ExtPrivkey::from_seed(&self.seed, network_type)?;
     ext_priv.derive_from_number(child_number, hardened)
   }
 
@@ -1310,7 +1310,7 @@ impl HDWallet {
     network_type: &Network,
     child_number_list: &[u32],
   ) -> Result<ExtPrivkey, CfdError> {
-    let ext_priv = ExtPrivkey::from_seed(&self.seed, &network_type)?;
+    let ext_priv = ExtPrivkey::from_seed(&self.seed, network_type)?;
     ext_priv.derive_from_number_list(child_number_list)
   }
 
@@ -1328,7 +1328,7 @@ impl HDWallet {
   /// let extkey = hdwallet.get_pubkey(&Network::Testnet).expect("Fail");
   /// ```
   pub fn get_pubkey(&self, network_type: &Network) -> Result<ExtPubkey, CfdError> {
-    let ext_priv = ExtPrivkey::from_seed(&self.seed, &network_type)?;
+    let ext_priv = ExtPrivkey::from_seed(&self.seed, network_type)?;
     ext_priv.get_ext_pubkey()
   }
 
@@ -1352,7 +1352,7 @@ impl HDWallet {
     network_type: &Network,
     bip32path: &str,
   ) -> Result<ExtPubkey, CfdError> {
-    let ext_priv = ExtPrivkey::from_seed(&self.seed, &network_type)?;
+    let ext_priv = ExtPrivkey::from_seed(&self.seed, network_type)?;
     ext_priv.derive_pubkey_from_path(bip32path)
   }
 
@@ -1377,7 +1377,7 @@ impl HDWallet {
     child_number: u32,
     hardened: bool,
   ) -> Result<ExtPubkey, CfdError> {
-    let ext_priv = ExtPrivkey::from_seed(&self.seed, &network_type)?;
+    let ext_priv = ExtPrivkey::from_seed(&self.seed, network_type)?;
     ext_priv.derive_pubkey_from_number(child_number, hardened)
   }
 
@@ -1401,7 +1401,7 @@ impl HDWallet {
     network_type: &Network,
     child_number_list: &[u32],
   ) -> Result<ExtPubkey, CfdError> {
-    let ext_priv = ExtPrivkey::from_seed(&self.seed, &network_type)?;
+    let ext_priv = ExtPrivkey::from_seed(&self.seed, network_type)?;
     ext_priv.derive_pubkey_from_number_list(child_number_list)
   }
 }

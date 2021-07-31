@@ -871,7 +871,7 @@ impl IssuanceKeyMap {
   }
 
   pub fn get_value(&self, outpoint: &OutPoint) -> Option<&IssuanceKeyItem> {
-    self.map.get(&outpoint)
+    self.map.get(outpoint)
   }
 }
 
@@ -1136,11 +1136,11 @@ impl ElementsUtxoData {
     self.asset_blind_factor = asset_blind_factor.clone();
     self.amount_blind_factor = amount_blind_factor.clone();
     if !asset_blind_factor.is_empty() || !amount_blind_factor.is_empty() {
-      let asset_commitment = self.asset.get_commitment(&asset_blind_factor)?;
+      let asset_commitment = self.asset.get_commitment(asset_blind_factor)?;
       let commitment = ConfidentialValue::get_commitment(
         self.utxo.amount,
         &asset_commitment,
-        &amount_blind_factor,
+        amount_blind_factor,
       )?;
       if !value_commitment.eq(&commitment) {
         return Err(CfdError::IllegalArgument(
@@ -2489,7 +2489,7 @@ impl ConfidentialTransaction {
     let tx = ope.add_pubkey_hash_sign(&tx_hex, outpoint, hash_type, pubkey, signature)?;
     let new_tx_hex = ope.get_last_tx();
     let mut ope2 = ConfidentialTxOperation::new(&Network::LiquidV1);
-    let new_txin = ope2.get_txin_by_outpoint(&new_tx_hex, outpoint)?;
+    let new_txin = ope2.get_txin_by_outpoint(new_tx_hex, outpoint)?;
     let index = ope2.get_last_txin_index();
     let data = ope2.get_last_tx_data().clone();
     let mut tx_obj = ConfidentialTransaction {
@@ -2554,7 +2554,7 @@ impl ConfidentialTransaction {
     let tx = ope.sign_with_privkey(&tx_hex, outpoint, hash_type, &key, &option, true)?;
     let new_tx_hex = ope.get_last_tx();
     let mut ope2 = ope.clone();
-    let new_txin = ope2.get_txin_by_outpoint(&new_tx_hex, outpoint)?;
+    let new_txin = ope2.get_txin_by_outpoint(new_tx_hex, outpoint)?;
     let index = ope2.get_last_txin_index();
     let data = ope2.get_last_tx_data().clone();
     let mut tx_obj = ConfidentialTransaction {
@@ -2623,7 +2623,7 @@ impl ConfidentialTransaction {
     let tx = ope.add_multisig_sign(&tx_hex, outpoint, hash_type, redeem_script, signature_list)?;
     let new_tx_hex = ope.get_last_tx();
     let mut ope2 = ConfidentialTxOperation::new(&Network::LiquidV1);
-    let new_txin = ope2.get_txin_by_outpoint(&new_tx_hex, outpoint)?;
+    let new_txin = ope2.get_txin_by_outpoint(new_tx_hex, outpoint)?;
     let index = ope2.get_last_txin_index();
     let data = ope2.get_last_tx_data().clone();
     let mut tx_obj = ConfidentialTransaction {
@@ -2681,7 +2681,7 @@ impl ConfidentialTransaction {
     let tx = ope.add_sign(&tx_hex, outpoint, hash_type, sign_data, clear_stack)?;
     let new_tx_hex = ope.get_last_tx();
     let mut ope2 = ConfidentialTxOperation::new(&Network::LiquidV1);
-    let new_txin = ope2.get_txin_by_outpoint(&new_tx_hex, outpoint)?;
+    let new_txin = ope2.get_txin_by_outpoint(new_tx_hex, outpoint)?;
     let index = ope2.get_last_txin_index();
     let data = ope2.get_last_tx_data().clone();
     let mut tx_obj = ConfidentialTransaction {
@@ -2751,7 +2751,7 @@ impl ConfidentialTransaction {
     )?;
     let new_tx_hex = ope.get_last_tx();
     let mut ope2 = ConfidentialTxOperation::new(&Network::LiquidV1);
-    let new_txin = ope2.get_txin_by_outpoint(&new_tx_hex, outpoint)?;
+    let new_txin = ope2.get_txin_by_outpoint(new_tx_hex, outpoint)?;
     let index = ope2.get_last_txin_index();
     let data = ope2.get_last_tx_data().clone();
     let mut tx_obj = ConfidentialTransaction {
@@ -3211,7 +3211,7 @@ impl ConfidentialTxOperation {
           }
           for ct_addr in confidential_addresses.iter() {
             let _ret = {
-              let addr = alloc_c_string(&ct_addr.to_str())?;
+              let addr = alloc_c_string(ct_addr.to_str())?;
               let error_code = unsafe {
                 CfdAddBlindTxOutByAddress(handle.as_handle(), blind_handle, addr.as_ptr())
               };
@@ -3931,7 +3931,7 @@ impl ConfidentialTxOperation {
           &tx_handle,
           &String::default(),
           index,
-          &txout_list,
+          txout_list,
         )?;
         self.tx_data = self.get_all_data_internal(&handle, &tx_handle, &String::default())?;
         self.get_tx_internal(&handle, &tx_handle, &String::default())
@@ -3963,24 +3963,24 @@ impl ConfidentialTxOperation {
   ) -> Result<ConfidentialTxData, CfdError> {
     let tx_data_handle = match tx_handle.is_null() {
       false => tx_handle.clone(),
-      _ => TxDataHandle::new(&handle, &self.network, tx)?,
+      _ => TxDataHandle::new(handle, &self.network, tx)?,
     };
     let result = {
-      let data = self.get_tx_data_internal(&handle, &tx_handle, tx)?;
+      let data = self.get_tx_data_internal(handle, tx_handle, tx)?;
       let in_count =
-        TransactionOperation::get_count_internal(&self.network, &handle, &tx_handle, tx, true)?;
+        TransactionOperation::get_count_internal(&self.network, handle, tx_handle, tx, true)?;
       let out_count =
-        TransactionOperation::get_count_internal(&self.network, &handle, &tx_handle, tx, false)?;
+        TransactionOperation::get_count_internal(&self.network, handle, tx_handle, tx, false)?;
       let in_indexes = ConfidentialTxOperation::create_index_list(in_count);
       let out_indexes = ConfidentialTxOperation::create_index_list(out_count);
-      let in_data = self.get_tx_input_list_internal(&handle, &tx_handle, tx, &in_indexes)?;
-      let out_data = self.get_tx_output_list_internal(&handle, &tx_handle, tx, &out_indexes)?;
+      let in_data = self.get_tx_input_list_internal(handle, tx_handle, tx, &in_indexes)?;
+      let out_data = self.get_tx_output_list_internal(handle, tx_handle, tx, &out_indexes)?;
       self.txin_list = in_data;
       self.txout_list = out_data;
       Ok(data)
     };
     if tx_handle.is_null() {
-      tx_data_handle.free_handle(&handle);
+      tx_data_handle.free_handle(handle);
     }
     result
   }
@@ -4014,7 +4014,7 @@ impl ConfidentialTxOperation {
   ) -> Result<Vec<u8>, CfdError> {
     let tx_data_handle = match tx_handle.is_null() {
       false => tx_handle.clone(),
-      _ => TxDataHandle::new(&handle, &self.network, tx)?,
+      _ => TxDataHandle::new(handle, &self.network, tx)?,
     };
     let mut output: *mut c_char = ptr::null_mut();
     let result = {
@@ -4031,7 +4031,7 @@ impl ConfidentialTxOperation {
       }
     };
     if tx_handle.is_null() {
-      tx_data_handle.free_handle(&handle);
+      tx_data_handle.free_handle(handle);
     }
     result
   }
@@ -4051,7 +4051,7 @@ impl ConfidentialTxOperation {
   ) -> Result<ConfidentialTxData, CfdError> {
     let tx_data_handle = match tx_handle.is_null() {
       false => tx_handle.clone(),
-      _ => TxDataHandle::new(&handle, &self.network, tx)?,
+      _ => TxDataHandle::new(handle, &self.network, tx)?,
     };
     let mut data = ConfidentialTxData::default();
     let mut txid: *mut c_char = ptr::null_mut();
@@ -4085,7 +4085,7 @@ impl ConfidentialTxOperation {
       _ => Err(handle.get_error(error_code)),
     };
     if tx_handle.is_null() {
-      tx_data_handle.free_handle(&handle);
+      tx_data_handle.free_handle(handle);
     }
     result
   }
@@ -4145,7 +4145,7 @@ impl ConfidentialTxOperation {
   ) -> Result<ConfidentialTxIn, CfdError> {
     let tx_data_handle = match tx_handle.is_null() {
       false => tx_handle.clone(),
-      _ => TxDataHandle::new(&handle, &self.network, tx)?,
+      _ => TxDataHandle::new(handle, &self.network, tx)?,
     };
     let list_result = {
       let index = {
@@ -4167,8 +4167,8 @@ impl ConfidentialTxOperation {
       }?;
 
       let indexes = vec![index];
-      let list_result = self.get_tx_input_list_internal(&handle, &tx_data_handle, tx, &indexes)?;
-      let data_result = self.get_tx_data_internal(&handle, &tx_data_handle, tx)?;
+      let list_result = self.get_tx_input_list_internal(handle, &tx_data_handle, tx, &indexes)?;
+      let data_result = self.get_tx_data_internal(handle, &tx_data_handle, tx)?;
       self.tx_data = data_result;
       if list_result.is_empty() {
         Err(CfdError::Internal("Failed to empty list.".to_string()))
@@ -4179,7 +4179,7 @@ impl ConfidentialTxOperation {
       }
     };
     if tx_handle.is_null() {
-      tx_data_handle.free_handle(&handle);
+      tx_data_handle.free_handle(handle);
     }
     list_result
   }
@@ -4193,7 +4193,7 @@ impl ConfidentialTxOperation {
   ) -> Result<Vec<ConfidentialTxIn>, CfdError> {
     let tx_data_handle = match tx_handle.is_null() {
       false => tx_handle.clone(),
-      _ => TxDataHandle::new(&handle, &self.network, tx)?,
+      _ => TxDataHandle::new(handle, &self.network, tx)?,
     };
     let mut list: Vec<ConfidentialTxIn> = vec![];
     list.reserve(indexes.len());
@@ -4221,18 +4221,18 @@ impl ConfidentialTxOperation {
               let txid_ret = Txid::from_str(&str_list[0])?;
               let script_ret = Script::from_hex(&str_list[1])?;
               let script_witness = TransactionOperation::get_tx_input_witness(
-                &handle,
+                handle,
                 &tx_data_handle,
                 *index,
                 WITNESS_STACK_TYPE_NORMAL,
               )?;
               let pegin_witness = TransactionOperation::get_tx_input_witness(
-                &handle,
+                handle,
                 &tx_data_handle,
                 *index,
                 WITNESS_STACK_TYPE_PEGIN,
               )?;
-              let issuance = self.get_tx_input_issuance(&handle, &tx_data_handle, *index)?;
+              let issuance = self.get_tx_input_issuance(handle, &tx_data_handle, *index)?;
               data.outpoint = OutPoint::new(&txid_ret, data.outpoint.get_vout());
               data.script_sig = script_ret;
               data.script_witness = script_witness;
@@ -4254,7 +4254,7 @@ impl ConfidentialTxOperation {
       }
     };
     if tx_handle.is_null() {
-      tx_data_handle.free_handle(&handle);
+      tx_data_handle.free_handle(handle);
     }
     result
   }
@@ -4268,7 +4268,7 @@ impl ConfidentialTxOperation {
   ) -> Result<Vec<ConfidentialTxOut>, CfdError> {
     let tx_data_handle = match tx_handle.is_null() {
       false => tx_handle.clone(),
-      _ => TxDataHandle::new(&handle, &self.network, tx)?,
+      _ => TxDataHandle::new(handle, &self.network, tx)?,
     };
     let mut list: Vec<ConfidentialTxOut> = vec![];
     list.reserve(indexes.len());
@@ -4325,7 +4325,7 @@ impl ConfidentialTxOperation {
       }
     };
     if tx_handle.is_null() {
-      tx_data_handle.free_handle(&handle);
+      tx_data_handle.free_handle(handle);
     }
     result
   }
@@ -4445,7 +4445,7 @@ impl ConfidentialTxOperation {
           for txin_data in txin_list {
             let _err = {
               let txid = alloc_c_string(&txin_data.utxo.outpoint.get_txid().to_hex())?;
-              let descriptor = alloc_c_string(&txin_data.utxo.descriptor.to_str())?;
+              let descriptor = alloc_c_string(txin_data.utxo.descriptor.to_str())?;
               let sig_tmpl = alloc_c_string(&txin_data.utxo.scriptsig_template.to_hex())?;
               let asset = alloc_c_string(&txin_data.asset.get_unblind_asset()?)?;
               let claim_script = alloc_c_string(&txin_data.option.claim_script.to_hex())?;
@@ -4544,7 +4544,7 @@ impl ConfidentialTxOperation {
           for (index, utxo_data) in utxo_list.iter().enumerate() {
             let _err = {
               let txid = alloc_c_string(&utxo_data.utxo.outpoint.get_txid().to_hex())?;
-              let descriptor = alloc_c_string(&utxo_data.utxo.descriptor.to_str())?;
+              let descriptor = alloc_c_string(utxo_data.utxo.descriptor.to_str())?;
               let sig_tmpl = alloc_c_string(&utxo_data.utxo.scriptsig_template.to_hex())?;
               let asset = alloc_c_string(&utxo_data.asset.get_unblind_asset()?)?;
               let error_code = unsafe {
@@ -4712,7 +4712,7 @@ impl ConfidentialTxOperation {
           for txin_data in txin_list {
             let _err = {
               let txid = alloc_c_string(&txin_data.utxo.outpoint.get_txid().to_hex())?;
-              let descriptor = alloc_c_string(&txin_data.utxo.descriptor.to_str())?;
+              let descriptor = alloc_c_string(txin_data.utxo.descriptor.to_str())?;
               let sig_tmpl = alloc_c_string(&txin_data.utxo.scriptsig_template.to_hex())?;
               let asset = alloc_c_string(&txin_data.asset.get_unblind_asset()?)?;
               let claim_script = alloc_c_string(&txin_data.option.claim_script.to_hex())?;
@@ -4743,7 +4743,7 @@ impl ConfidentialTxOperation {
           for utxo_data in utxo_list {
             let _err = {
               let txid = alloc_c_string(&utxo_data.utxo.outpoint.get_txid().to_hex())?;
-              let descriptor = alloc_c_string(&utxo_data.utxo.descriptor.to_str())?;
+              let descriptor = alloc_c_string(utxo_data.utxo.descriptor.to_str())?;
               let sig_tmpl = alloc_c_string(&utxo_data.utxo.scriptsig_template.to_hex())?;
               let asset = alloc_c_string(&utxo_data.asset.get_unblind_asset()?)?;
               let error_code = unsafe {
