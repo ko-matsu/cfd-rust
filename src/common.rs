@@ -127,6 +127,10 @@ impl Network {
     }
   }
 
+  pub fn is_mainnet(&self) -> bool {
+    matches!(self, Network::LiquidV1 | Network::Mainnet)
+  }
+
   pub fn to_str(&self) -> &str {
     match self {
       Network::Mainnet => "mainnet",

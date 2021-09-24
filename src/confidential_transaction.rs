@@ -38,13 +38,13 @@ use self::cfd_sys::{
   CfdFreeTransactionHandle, CfdGetAppendTxOutFundRawTx, CfdGetAssetCommitment,
   CfdGetBlindTxBlindData, CfdGetConfidentialTxInfoByHandle, CfdGetConfidentialTxOutSimpleByHandle,
   CfdGetConfidentialValueHex, CfdGetDefaultBlindingKey, CfdGetIssuanceBlindingKey,
-  CfdGetSelectedCoinIndex, CfdGetTxInByHandle, CfdGetTxInIndexByHandle,
-  CfdGetTxInIssuanceInfoByHandle, CfdGetTxOutIndex, CfdGetValueCommitment, CfdInitializeBlindTx,
-  CfdInitializeCoinSelection, CfdInitializeEstimateFee, CfdInitializeFundRawTx,
-  CfdInitializeTransaction, CfdSetBlindTxOption, CfdSetIssueAsset, CfdSetOptionCoinSelection,
-  CfdSetOptionEstimateFee, CfdSetReissueAsset, CfdUnblindIssuance, CfdUnblindTxOut,
-  CfdUnblindTxOutData,
-  CfdUpdateTxOutAmount, BLIND_OPT_COLLECT_BLINDER, BLIND_OPT_EXPONENT, BLIND_OPT_MINIMUM_BITS,
+  CfdGetPegoutMainchainAddress, CfdGetSelectedCoinIndex, CfdGetTxInByHandle,
+  CfdGetTxInIndexByHandle, CfdGetTxInIssuanceInfoByHandle, CfdGetTxOutIndex, CfdGetValueCommitment,
+  CfdHasPegoutConfidentialTxOut, CfdInitializeBlindTx, CfdInitializeCoinSelection,
+  CfdInitializeEstimateFee, CfdInitializeFundRawTx, CfdInitializeTransaction, CfdSetBlindTxOption,
+  CfdSetIssueAsset, CfdSetOptionCoinSelection, CfdSetOptionEstimateFee, CfdSetReissueAsset,
+  CfdUnblindIssuance, CfdUnblindTxOut, CfdUnblindTxOutData, CfdUpdateTxOutAmount,
+  BLIND_OPT_COLLECT_BLINDER, BLIND_OPT_EXPONENT, BLIND_OPT_MINIMUM_BITS,
   BLIND_OPT_MINIMUM_RANGE_VALUE, COIN_OPT_BLIND_EXPONENT, COIN_OPT_BLIND_MINIMUM_BITS,
   DEFAULT_BLIND_MINIMUM_BITS, FEE_OPT_BLIND_EXPONENT, FEE_OPT_BLIND_MINIMUM_BITS,
   FUND_OPT_BLIND_EXPONENT, FUND_OPT_BLIND_MINIMUM_BITS, FUND_OPT_DUST_FEE_RATE, FUND_OPT_IS_BLIND,
@@ -1638,10 +1638,14 @@ pub struct ConfidentialTxOut {
 }
 
 impl ConfidentialTxOut {
-  pub fn unblind(blinding_key: &Privkey, locking_script: &Script,
-      asset_commitment: &ConfidentialAsset, value_commitment: &ConfidentialValue,
-      nonce: &ConfidentialNonce, rangeproof: &ByteData,
-    ) -> Result<UnblindData, CfdError> {
+  pub fn unblind(
+    blinding_key: &Privkey,
+    locking_script: &Script,
+    asset_commitment: &ConfidentialAsset,
+    value_commitment: &ConfidentialValue,
+    nonce: &ConfidentialNonce,
+    rangeproof: &ByteData,
+  ) -> Result<UnblindData, CfdError> {
     let mut handle = ErrorHandle::new()?;
     let key_hex = alloc_c_string(&blinding_key.to_hex())?;
     let script_hex = alloc_c_string(&locking_script.to_hex())?;
@@ -1670,8 +1674,10 @@ impl ConfidentialTxOut {
     };
     let result = match error_code {
       0 => {
-        let str_list = unsafe { collect_multi_cstring_and_free(&[asset, asset_blind_factor, value_blind_factor]) }?;
-        Ok(UnblindData{
+        let str_list = unsafe {
+          collect_multi_cstring_and_free(&[asset, asset_blind_factor, value_blind_factor])
+        }?;
+        Ok(UnblindData {
           asset: ConfidentialAsset::from_str(&str_list[0])?,
           amount: ConfidentialValue::from_amount(amount)?,
           asset_blind_factor: BlindFactor::from_str(&str_list[1])?,
@@ -2299,6 +2305,29 @@ impl ConfidentialTransaction {
       txin_list: ope.get_txin_list_cache().to_vec(),
       txout_list: ope.get_txout_list_cache().to_vec(),
     })
+  }
+
+  /// Has pegout into the transaction output.
+  ///
+  /// # Arguments
+  /// * `index` - A transaction output index.
+  pub fn has_pegout_txout(&self, index: u32) -> Result<bool, CfdError> {
+    let ope = ConfidentialTxOperation::new(&Network::LiquidV1);
+    ope.has_pegout_txout(&hex_from_bytes(&self.tx), index)
+  }
+
+  /// Get pegout address.
+  ///
+  /// # Arguments
+  /// * `index` - A transaction output index.
+  /// * `mainchain_network_type` - A mainchain network type.
+  pub fn get_pegout_address(
+    &self,
+    index: u32,
+    mainchain_network_type: Network,
+  ) -> Result<Address, CfdError> {
+    let ope = ConfidentialTxOperation::new(&Network::LiquidV1);
+    ope.get_pegout_address(&hex_from_bytes(&self.tx), index, mainchain_network_type)
   }
 
   pub fn get_txin_index(&self, outpoint: &OutPoint) -> Result<u32, CfdError> {
@@ -3729,6 +3758,62 @@ impl ConfidentialTxOperation {
       }
       _ => Err(handle.get_error(error_code)),
     }
+  }
+
+  pub fn has_pegout_txout(&self, tx: &str, index: u32) -> Result<bool, CfdError> {
+    let mut handle = ErrorHandle::new()?;
+    let result = {
+      let tx_handle = TxDataHandle::new(&handle, &self.network, tx)?;
+      let tx_result = {
+        let error_code = unsafe {
+          CfdHasPegoutConfidentialTxOut(handle.as_handle(), tx_handle.as_handle(), index)
+        };
+        match error_code {
+          0 => Ok(true),
+          7 => Ok(false),
+          _ => Err(handle.get_error(error_code)),
+        }
+      };
+      tx_handle.free_handle(&handle);
+      tx_result
+    };
+    handle.free_handle();
+    result
+  }
+
+  pub fn get_pegout_address(
+    &self,
+    tx: &str,
+    index: u32,
+    mainchain_network_type: Network,
+  ) -> Result<Address, CfdError> {
+    let mut handle = ErrorHandle::new()?;
+    let result = {
+      let tx_handle = TxDataHandle::new(&handle, &self.network, tx)?;
+      let tx_result = {
+        let mut address: *mut c_char = ptr::null_mut();
+        let error_code = unsafe {
+          CfdGetPegoutMainchainAddress(
+            handle.as_handle(),
+            tx_handle.as_handle(),
+            index,
+            mainchain_network_type.to_c_value(),
+            &mut address,
+          )
+        };
+        match error_code {
+          0 => {
+            let addr_str = unsafe { collect_cstring_and_free(address) }?;
+            Address::from_str(&addr_str)
+          }
+          _ => Err(handle.get_error(error_code)),
+        }
+      };
+      tx_handle.free_handle(&handle);
+      tx_result
+    };
+    handle.free_handle();
+    result
   }
 
   pub fn create(
