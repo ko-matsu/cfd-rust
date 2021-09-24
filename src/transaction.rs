@@ -2789,8 +2789,7 @@ impl TransactionOperation {
       let in_indexes = TransactionOperation::create_index_list(in_count);
       let out_indexes = TransactionOperation::create_index_list(out_count);
       let in_data = self.get_tx_input_list_internal(handle, &tx_data_handle, tx, &in_indexes)?;
-      let out_data =
-        self.get_tx_output_list_internal(handle, &tx_data_handle, tx, &out_indexes)?;
+      let out_data = self.get_tx_output_list_internal(handle, &tx_data_handle, tx, &out_indexes)?;
       self.txin_list = in_data;
       self.txout_list = out_data;
       Ok(data)

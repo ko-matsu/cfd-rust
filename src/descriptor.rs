@@ -684,9 +684,7 @@ impl Descriptor {
     Descriptor::multisig_base(pubkey_list, require_num, hash_type, network_type, true)
   }
 
-  pub fn taproot_single(
-    schnorr_pubkey: &SchnorrPubkey,
-  ) -> Result<Descriptor, CfdError> {
+  pub fn taproot_single(schnorr_pubkey: &SchnorrPubkey) -> Result<Descriptor, CfdError> {
     let desc = format!("tr({})", schnorr_pubkey.to_hex());
     Descriptor::new(&desc, &Network::Mainnet)
   }

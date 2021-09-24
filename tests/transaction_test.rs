@@ -280,11 +280,9 @@ mod tests {
     );
 
     assert!(outpoint2.eq(&tx.get_txin_list()[1].outpoint));
-    assert!(
-      addr2
-        .get_locking_script()
-        .eq(&tx.get_txout_list()[1].locking_script)
-    );
+    assert!(addr2
+      .get_locking_script()
+      .eq(&tx.get_txout_list()[1].locking_script));
   }
 
   #[test]

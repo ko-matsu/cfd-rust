@@ -48,12 +48,10 @@ mod tests {
       proof.to_hex());
 
     assert!(block.exist_txid(&txid));
-    assert!(
-      !block.exist_txid(
-        &Txid::from_str("f5ce9417846b075c82da9368ed6bf40b59721662b64e4dd506fbdc50911f39fe")
-          .expect("Fail")
-      )
-    );
+    assert!(!block.exist_txid(
+      &Txid::from_str("f5ce9417846b075c82da9368ed6bf40b59721662b64e4dd506fbdc50911f39fe")
+        .expect("Fail")
+    ));
   }
 
   #[test]
@@ -126,11 +124,9 @@ mod tests {
       proof.to_hex());
 
     assert!(block.exist_txid(&txid));
-    assert!(
-      !block.exist_txid(
-        &Txid::from_str("f5ce9417846b075c82da9368ed6bf40b59721662b64e4dd506fbdc50911f39fe")
-          .expect("Fail")
-      )
-    );
+    assert!(!block.exist_txid(
+      &Txid::from_str("f5ce9417846b075c82da9368ed6bf40b59721662b64e4dd506fbdc50911f39fe")
+        .expect("Fail")
+    ));
   }
 }

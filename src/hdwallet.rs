@@ -158,15 +158,18 @@ impl ExtKey {
         let chain_code_byte = byte_from_hex_unsafe(chain_code_obj);
         let net_type = Network::from_c_value(network_type);
         let extkey_type = ExtKeyType::from_c_value(key_type)?;
-        Ok((ExtKey {
-          extkey: extkey.to_string(),
-          version: ByteData::from_slice(&version_byte),
-          fingerprint: ByteData::from_slice(&fingerprint_byte),
-          chain_code: ByteData::from_slice(&chain_code_byte),
-          depth: depth as u8,
-          child_number,
-          network_type: net_type,
-        }, extkey_type))
+        Ok((
+          ExtKey {
+            extkey: extkey.to_string(),
+            version: ByteData::from_slice(&version_byte),
+            fingerprint: ByteData::from_slice(&fingerprint_byte),
+            chain_code: ByteData::from_slice(&chain_code_byte),
+            depth: depth as u8,
+            child_number,
+            network_type: net_type,
+          },
+          extkey_type,
+        ))
       }
       _ => Err(handle.get_error(error_code)),
     };
@@ -197,7 +200,7 @@ impl ExtKey {
     let result = match error_code {
       0 => {
         let extkey_obj = unsafe { collect_cstring_and_free(extkey_hex) }?;
-        let (extkey, _ ) = ExtKey::from_extkey(&extkey_obj)?;
+        let (extkey, _) = ExtKey::from_extkey(&extkey_obj)?;
         Ok(extkey)
       }
       _ => Err(handle.get_error(error_code)),
@@ -243,7 +246,7 @@ impl ExtKey {
     let result = match error_code {
       0 => {
         let extkey_obj = unsafe { collect_cstring_and_free(extkey_hex) }?;
-        let (extkey, _ ) = ExtKey::from_extkey(&extkey_obj)?;
+        let (extkey, _) = ExtKey::from_extkey(&extkey_obj)?;
         Ok(extkey)
       }
       _ => Err(handle.get_error(error_code)),
