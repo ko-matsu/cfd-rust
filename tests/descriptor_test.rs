@@ -589,4 +589,41 @@ mod tests {
       key_data.to_str()
     );
   }
+
+  #[test]
+  fn descriptor_taproot_hashonly_test() {
+    let desc = "tr(ef514f1aeb14baa6cc57ab3268fb329ca540c48454f7f46771ed731e34ba521a,{1717a480c2e3a474eed8dba83f684731243cff8ef384521936cf3a730dd0a286,{1717a480c2e3a474eed8dba83f684731243cff8ef384521936cf3a730dd0a286,80039cda864c4f2f1c87f161b0038e57fb7a4a59ff37517048696b85cdaaf911}})";
+    let desc_checksum = desc.to_string() + "#xffhk3u4";
+    let derive_path = "1";
+    let desc_obj =
+      Descriptor::with_derive_bip32path(desc, derive_path, &Network::Regtest).expect("Fail");
+    assert_eq!(desc_checksum, desc_obj.to_str());
+    assert_eq!(&HashType::Taproot, desc_obj.get_hash_type());
+    assert_eq!(
+      "bcrt1pfuqf4j7ceyzmu3rsmude93ctu948r565hf2ucrn9z7zn7a7hjegskj3rsv",
+      desc_obj.get_address().to_str()
+    );
+    assert_eq!(
+      "OP_1 4f009acbd8c905be4470df1b92c70be16a71d354ba55cc0e6517853f77d79651",
+      desc_obj.get_address().get_locking_script().to_asm()
+    );
+    assert!(!desc_obj.has_script_hash());
+    assert_eq!(1, desc_obj.get_script_list().len());
+    assert!(desc_obj.has_tapscript());
+    assert_eq!(
+      "{1717a480c2e3a474eed8dba83f684731243cff8ef384521936cf3a730dd0a286,{1717a480c2e3a474eed8dba83f684731243cff8ef384521936cf3a730dd0a286,80039cda864c4f2f1c87f161b0038e57fb7a4a59ff37517048696b85cdaaf911}}",
+      desc_obj.get_script_tree().to_str());
+    assert_eq!(
+      &DescriptorKeyType::Schnorr,
+      desc_obj.get_key_data().expect("Fail").get_type()
+    );
+    assert_eq!(
+      "ef514f1aeb14baa6cc57ab3268fb329ca540c48454f7f46771ed731e34ba521a",
+      desc_obj
+        .get_key_data()
+        .expect("Fail")
+        .get_schnorr_pubkey()
+        .to_hex()
+    );
+  }
 }

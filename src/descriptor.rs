@@ -684,6 +684,13 @@ impl Descriptor {
     Descriptor::multisig_base(pubkey_list, require_num, hash_type, network_type, true)
   }
 
+  pub fn taproot_single(
+    schnorr_pubkey: &SchnorrPubkey,
+  ) -> Result<Descriptor, CfdError> {
+    let desc = format!("tr({})", schnorr_pubkey.to_hex());
+    Descriptor::new(&desc, &Network::Mainnet)
+  }
+
   fn multisig_base(
     pubkey_list: &[Pubkey],
     require_num: u8,
@@ -1103,6 +1110,10 @@ impl Descriptor {
 
   pub fn has_taproot(&self) -> bool {
     self.root_data.script_type == DescriptorScriptType::Taproot
+  }
+
+  pub fn has_tapscript(&self) -> bool {
+    self.has_taproot() && !self.root_data.script_tree.to_str().is_empty()
   }
 
   pub fn get_key_data(&self) -> Result<&KeyData, CfdError> {
