@@ -68,7 +68,7 @@ impl Block {
   /// * `data` - An unsigned 8bit slice that holds the byte data.
   #[inline]
   pub fn from_data(data: &ByteData) -> Result<Block, CfdError> {
-    Block::from_slice(&data.to_slice())
+    Block::from_slice(data.to_slice())
   }
 
   #[inline]
@@ -107,7 +107,7 @@ impl Block {
   }
 
   /// Exist txid in block
-  /// 
+  ///
   /// # Arguments
   /// * `txid` - A transaction id.
   pub fn exist_txid(&self, txid: &Txid) -> bool {
