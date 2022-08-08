@@ -8,7 +8,7 @@ on:
 jobs:
   create_releases:
     name: create-releases
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     outputs:
       release_url: ${{ steps.output_url.outputs.upload_url }}
 
@@ -118,8 +118,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-#        os: [ubuntu-20.04, ubuntu-18.04]
-        os_ver: [20, 18]
+        os_ver: [20, 22]
         bin: [gcc, gcc-static]
         include:
           - bin: gcc
@@ -168,11 +167,11 @@ jobs:
   upload-object-alpine:
     name: upload-object-alpine
     needs: create_releases
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
       matrix:
-        alpine: ['3.10', '3.12', '3.13']
+        alpine: ['3.10', '3.12', '3.14', '3.15']
 
     steps:
     - name: checkout
@@ -192,9 +191,14 @@ jobs:
       uses: docker://alpine:3.12
       with:
         entrypoint: /github/workspace/.github/workflows/docker/alpine_build_entrypoint.sh
-    - name: docker setup 3.13
-      if: matrix.alpine == '3.13'
-      uses: docker://alpine:3.13
+    - name: docker setup 3.14
+      if: matrix.alpine == '3.14'
+      uses: docker://alpine:3.14
+      with:
+        entrypoint: /github/workspace/.github/workflows/docker/alpine_build_entrypoint.sh
+    - name: docker setup 3.15
+      if: matrix.alpine == '3.15'
+      uses: docker://alpine:3.15
       with:
         entrypoint: /github/workspace/.github/workflows/docker/alpine_build_entrypoint.sh
     - name: create archive file
@@ -230,17 +234,25 @@ jobs:
   upload-object-macos:
     name: upload-object-macos
     needs: create_releases
-    runs-on: macos-10.15
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        xcode: [10.3, 11.7, 12.4]
+        os: [macos-11, macos-12]
+        xcode_version: ['11.7', '12.5.1', '13.4.1']
         shared: [on, off]
         include:
           - shared: on
             suffix:
           - shared: off
             suffix: -static
+        exclude:
+          - xcode_version: '11.7'
+            os: macos-12
+          - xcode_version: '12.5.1'
+            os: macos-12
+          - xcode_version: '13.4.1'
+            os: macos-11
 
     steps:
     - name: checkout
