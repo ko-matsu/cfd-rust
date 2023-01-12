@@ -1,6 +1,6 @@
 [package]
 name = "cfd_sys"
-version = "0.3.4"
+version = "0.3.5"
 license = "MIT"
 readme = "../README.md"
 keywords = ["build-dependencies"]
@@ -17,11 +17,11 @@ features = [ "serde" ]
 all-features = true
 
 [dependencies]
-libc = "0.2.83"
+libc = "0.2.139"
 
 [build-dependencies]
-cmake = "0.1.45"
-pkg-config = "0.3.19"
+cmake = "0.1.49"
+pkg-config = "0.3.26"
 
 [features]
 # When building from source, enable building optimized assembly routines. As
