@@ -14,7 +14,7 @@ jobs:
 
     steps:
     - name: checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
@@ -39,7 +39,7 @@ jobs:
     - name: output url
       id: output_url
       run: |
-        echo "::set-output name=upload_url::${{steps.get_release.outputs.upload_url}}${{steps.create_release.outputs.upload_url}}"
+        echo "upload_url=${{steps.get_release.outputs.upload_url}}${{steps.create_release.outputs.upload_url}}" >> $GITHUB_OUTPUT
 
   upload-object-windows-vs2019:
     name: upload-object-win-vs2019
@@ -62,13 +62,13 @@ jobs:
 
     steps:
     - name: checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: output url
       id: get_url
-      run: echo "::set-output name=upload_url::${{ needs.create_releases.outputs.release_url }}"
+      run: echo "upload_url=${{ needs.create_releases.outputs.release_url }}" >> $GITHUB_OUTPUT
     - name: Get the version
       id: get_version
-      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+      run: echo "VERSION=${GITHUB_REF/refs\/tags\///}" >> $GITHUB_OUTPUT
       shell: bash
     - name: dump version
       env:
@@ -133,10 +133,10 @@ jobs:
 
     steps:
     - name: checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Get the version
       id: get_version
-      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+      run: echo "VERSION=${GITHUB_REF/refs\/tags\///}" >> $GITHUB_OUTPUT
     - name: cmake-build
       run: |
         cd cfd-sys/cfd-cmake
@@ -158,7 +158,7 @@ jobs:
         ls -l
     - name: output url
       id: get_url
-      run: echo "::set-output name=upload_url::${{ needs.create_releases.outputs.release_url }}"
+      run: echo "upload_url=${{ needs.create_releases.outputs.release_url }}" >> $GITHUB_OUTPUT
     - name: Upload Release Asset Ubuntu
       uses: actions/upload-release-asset@v1.0.1
       env:
@@ -176,21 +176,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        alpine: ['3.13', '3.14', '3.15']
+        alpine: ['3.14', '3.15', '3.16', '3.17']
 
     steps:
     - name: checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Get the version
       id: get_version
-      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+      run: echo "VERSION=${GITHUB_REF/refs\/tags\///}" >> $GITHUB_OUTPUT
     - name: list
       run: ls -a $GITHUB_WORKSPACE
-    - name: docker setup 3.13
-      if: matrix.alpine == '3.13'
-      uses: docker://alpine:3.13
-      with:
-        entrypoint: /github/workspace/.github/workflows/docker/alpine_build_entrypoint.sh
     - name: docker setup 3.14
       if: matrix.alpine == '3.14'
       uses: docker://alpine:3.14
@@ -199,6 +194,16 @@ jobs:
     - name: docker setup 3.15
       if: matrix.alpine == '3.15'
       uses: docker://alpine:3.15
+      with:
+        entrypoint: /github/workspace/.github/workflows/docker/alpine_build_entrypoint.sh
+    - name: docker setup 3.16
+      if: matrix.alpine == '3.16'
+      uses: docker://alpine:3.16
+      with:
+        entrypoint: /github/workspace/.github/workflows/docker/alpine_build_entrypoint.sh
+    - name: docker setup 3.17
+      if: matrix.alpine == '3.17'
+      uses: docker://alpine:3.17
       with:
         entrypoint: /github/workspace/.github/workflows/docker/alpine_build_entrypoint.sh
     - name: create archive file
@@ -218,7 +223,7 @@ jobs:
         sudo ls -l /tmp/cfd
     - name: output url
       id: get_url
-      run: echo "::set-output name=upload_url::${{ needs.create_releases.outputs.release_url }}"
+      run: echo "upload_url=${{ needs.create_releases.outputs.release_url }}" >> $GITHUB_OUTPUT
     - name: Upload Release Asset
       id: upload-release-asset 
 #      if: success()
@@ -256,10 +261,10 @@ jobs:
 
     steps:
     - name: checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Get the version
       id: get_version
-      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+      run: echo "VERSION=${GITHUB_REF/refs\/tags\///}" >> $GITHUB_OUTPUT
     - name: cmake-build
       run: |
         cd cfd-sys/cfd-cmake
