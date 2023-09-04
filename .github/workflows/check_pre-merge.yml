@@ -1,18 +1,18 @@
 name: pre-merge check
 
-on: 
+on:
   push:
     branches:
-    - master
-    - develop
-    - features/sprint*
-    - stable_v*
+      - master
+      - develop
+      - features/sprint*
+      - stable_v*
   pull_request:
     branches:
-    - master
-    - develop
-    - features/sprint*
-    - stable_v*
+      - master
+      - develop
+      - features/sprint*
+      - stable_v*
 
 jobs:
   rust-test:
@@ -20,7 +20,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-2019, macos-11, ubuntu-20.04]
+        os: [windows-2019, macos-12, ubuntu-20.04]
 
     steps:
       - uses: actions/checkout@v3
